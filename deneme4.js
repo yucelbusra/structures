@@ -271,9 +271,9 @@ function checkForces() {
         const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 0.1);
         
         // 6. Verification Logic
-        if (!check(uV, expV)) errors.push(`Check Vmax (Expected ~${expV.toFixed(1)} lbs)`);
-        if (!check(uM, expM)) errors.push(`Check Mmax (Expected ~${expM.toFixed(1)} lbs-ft)`);
-        if (!check(uD, expD)) errors.push(`Check Deflection (Expected ~${expD.toFixed(3)} in)`);
+        if (!check(uV, expV)) errors.push(`Check Vmax: (wL/2)`);
+        if (!check(uM, expM)) errors.push(`Check Mmax: (wL²/8)`);
+        if (!check(uD, expD)) errors.push(`Check Deflection: (5wL^4/384EI)`);
 
         // 7. Result Handling
         if (errors.length === 0) {
@@ -482,4 +482,5 @@ function checkForces() {
       });
     });
 })();
+
 
