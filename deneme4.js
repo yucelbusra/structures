@@ -294,14 +294,14 @@
       if (mOk && vOk) {
         playSuccess?.();
         mvFb.style.color = '#2ecc71';
-        mvFb.innerHTML = `✅ Correct! Expected M<sub>max</sub>=${exp.Mmax.toFixed(2)} kN·m, V<sub>max</sub>=${exp.Vmax.toFixed(2)} kN.`;
+        mvFb.innerHTML = `✅ Correct! Expected M<sub>max</sub>=${exp.Mmax.toFixed(2)} lbs·ft, V<sub>max</sub>=${exp.Vmax.toFixed(2)} lbs.`;
         BadgeSystem?.earn?.('strength');
         document.getElementById('continueToSummaryBtn').disabled = false;
       } else {
         playError?.();
         mvFb.style.color = '#c26b00';
         mvFb.innerHTML = `❌ Check again.<br>
-          Remember,  Mmax = (w * L * L) / 8 kN·m and Vmax = (w * L) / 2 kN`;
+          Remember,  Mmax = (w * L * L) / 8 lbs·ft and Vmax = (w * L) / 2 lbs`;
         document.getElementById('continueToSummaryBtn').disabled = true;
       }
     }
@@ -325,9 +325,9 @@
           <ul>
             <li>Final Score: <b>${totalScore}</b></li>
             <li>Badges earned: <b>${earnedCount}</b></li>
-            <li>E<sub>d</sub>: <b>${(state.results.Ed ?? '-')}</b> kN/m</li>
-            <li>M<sub>max</sub> (your answer): <b>${(state.results.Mmax ?? '-')}</b> kN·m</li>
-            <li>V<sub>max</sub> (your answer): <b>${(state.results.Vmax ?? '-')}</b> kN</li>
+            <li>E<sub>d</sub>: <b>${(state.results.Ed ?? '-')}</b> lbs/ft</li>
+            <li>M<sub>max</sub> (your answer): <b>${(state.results.Mmax ?? '-')}</b> lbs·ft</li>
+            <li>V<sub>max</sub> (your answer): <b>${(state.results.Vmax ?? '-')}</b> lbs</li>
           </ul>
         </div>`;
       }
@@ -916,6 +916,7 @@
     });
 
   })();
+
 
 
 
