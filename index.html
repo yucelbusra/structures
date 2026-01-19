@@ -165,7 +165,7 @@
           
           <div style="margin-top:15px; padding:15px; border:2px dashed #0077cc; border-radius:10px; background:white; width:280px;">
             <h3 style="margin:0 0 10px 0; font-size:1.1em;">Total Design Load</h3>
-            <small>Sum of all entered loads (psi)</small><br>
+            <small>Loads applied on slab (psi)</small><br>
             <input type="number" id="inputTotalLoad" step="0.1" style="width:100px;">
             <button id="checkTotalLoadBtn" style="margin-top:0; padding:8px 15px; font-size:14px;">Check</button>
             <div id="loadFeedback" class="feedback-box"></div>
@@ -198,9 +198,8 @@
         </div>
 
         <div id="step2_lineLoad" class="calc-block">
-            <h3 style="margin-top:0;">Step 2: Line Load ($w$)</h3>
-            <p style="margin:5px 0 15px 0;">Formula: Total Load (psi) × Tributary Width (ft)</p>
-            <label>Line Load ($w$) (lbs/ft):</label><br>
+            <h3 style="margin-top:0;">Step 2: Line load on the beam (w)</h3>
+            <label>Line Load (w) (lbs/ft):</label><br>
             <input type="number" id="inputLineLoad" step="0.1"><br>
             <button id="checkLineLoadBtn">Check Line Load</button>
             <div id="lineLoadFeedback" class="feedback-box"></div>
@@ -256,3 +255,4 @@
   <script src="deneme4.js"></script>
 </body>
 </html>
+
