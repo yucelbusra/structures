@@ -1,225 +1,259 @@
+// deneme4.js
 (function () {
-    // --- HELPERS ---
+    // ---------- tiny helpers ----------
     const $ = (id) => document.getElementById(id);
     const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+  
+    // ---------- sound helpers ----------
+    function playClick() { $('clickSound')?.play?.(); }
+    function playSuccess() { $('successSound')?.play?.(); }
+    function playError() { $('errorSound')?.play?.(); }
 
-    // --- SOUNDS ---
-    const play = (id) => $(id)?.play?.().catch(() => {}); 
-    
-    // --- BADGES ---
-    const BadgeSystem = {
-        earned: new Set(),
-        init() { this.render(); },
-        earn(id, title) {
-            if (this.earned.has(id)) return;
-            this.earned.add(id);
-            this.render();
-            play('badgeSound');
-            
-            const banner = $('badgeNotification');
-            banner.innerHTML = `🎉 Earned Badge: ${title}`;
-            banner.style.display = 'block';
-            banner.style.animation = 'fadeInOut 3s forwards';
-            setTimeout(() => banner.style.display = 'none', 3000);
-        },
-        render() {
-            const container = $('badgeBar');
-            container.innerHTML = '';
-            const badges = [
-                { id: 'load', img: './img/badge2.png', title: 'Load Specialist' },
-                { id: 'geo', img: './img/badge1.png', title: 'Geometry Guru' },
-                { id: 'eng', img: './img/badge3.png', title: 'Chief Engineer' }
-            ];
-            badges.forEach(b => {
-                const img = document.createElement('img');
-                img.className = `badge ${this.earned.has(b.id) ? '' : 'locked'}`;
-                img.src = b.img;
-                img.title = b.title;
-                container.appendChild(img);
-            });
-        }
-    };
-
-    // --- STATE ---
+    // ---------- notification helper ----------
+    function showBadgeNotification(badgeName) {
+      const banner = $('badgeNotification');
+      if (!banner) return;
+      banner.innerHTML = `🎉 Congrats! You earned: <strong>${badgeName}</strong>`;
+      banner.style.display = 'block';
+      banner.style.opacity = '1';
+      banner.style.animation = 'none';
+      setTimeout(() => {
+        banner.style.animation = 'fadeInOut 3s forwards';
+      }, 10);
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 3000);
+    }
+  
+    // ---------- nav / progress ----------
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+      });
+      const scr = $(id);
+      if (scr) {
+        scr.style.display = 'flex';
+        scr.classList.add('active');
+      }
+    }
+  
+    function updateProgress(step) {
+      for (let i = 1; i <= step; i++) {
+        const el = $(`step${i}`);
+        if (el) el.classList.add('completed');
+      }
+    }
+  
+    // ---------- app state ----------
     const state = {
-        beamCount: 0,
-        totalLoad: 0,
-        confirmedTrib: 0, // Stores the correctly verified tributary width
-        confirmedW: 0,    // Stores the correctly verified line load
-        results: {}
+      beamCount: 0,
+      totalLoad: 0,       // Confirmed Total Design Load (psi)
+      tributaryWidth: 0,  // Confirmed Tributary Width (ft)
+      lineLoad: 0,        // Confirmed Line Load (lbs/ft)
+      
+      tributaryAttempts: 0,
+      tributaryPoints: 100,
+      
+      results: { Mmax: null, Vmax: null }
     };
 
-    // --- CANVAS FUNCTIONS ---
+    // ---------- HiDPI Canvas Helper (Original) ----------
     function ensureHiDPI(canvas) {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        return { ctx: canvas.getContext('2d'), width: canvas.width, height: canvas.height, dpr };
+      if (!canvas) return { dpr: 1, cw: 0, ch: 0 };
+      const dpr = window.devicePixelRatio || 1;
+      let cssW, cssH;
+      if (!canvas.dataset.originalWidth) {
+        cssW = canvas.getAttribute('width') ? Number(canvas.getAttribute('width')) : canvas.clientWidth || 400;
+        cssH = canvas.getAttribute('height') ? Number(canvas.getAttribute('height')) : canvas.clientHeight || 400;
+        canvas.dataset.originalWidth = cssW;
+        canvas.dataset.originalHeight = cssH;
+      } else {
+        cssW = Number(canvas.dataset.originalWidth);
+        cssH = Number(canvas.dataset.originalHeight);
+      }
+      const applied = canvas._hidpi || { w: 0, h: 0, dpr: 1 };
+      if (applied.w !== cssW || applied.h !== cssH || applied.dpr !== dpr) {
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        canvas.width = Math.max(1, Math.round(cssW * dpr));
+        canvas.height = Math.max(1, Math.round(cssH * dpr));
+        canvas._hidpi = { w: cssW, h: cssH, dpr };
+      }
+      return { dpr, cw: canvas.width, ch: canvas.height };
     }
 
-    function drawSlab() {
-        const canvas = $('slabCanvas');
-        const { ctx, width, height, dpr } = ensureHiDPI(canvas);
-        
-        const W_ft = parseFloat($('inputWidth').value) || 0;
-        const L_ft = parseFloat($('inputLength').value) || 0;
-        const count = parseInt($('inputBeamCount').value) || 0;
-        
-        ctx.fillStyle = '#e6f2fa';
-        ctx.fillRect(0, 0, width, height);
-
-        if (W_ft <= 0 || L_ft <= 0 || count < 2) return;
-
-        const padding = 40 * dpr;
-        const drawW = width - 2 * padding;
-        const drawH = height - 2 * padding;
-        const scale = Math.min(drawW / W_ft, drawH / L_ft);
-        
-        const slabPxW = W_ft * scale;
-        const slabPxH = L_ft * scale;
-        const startX = (width - slabPxW) / 2;
-        const startY = (height - slabPxH) / 2;
-
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 3 * dpr;
-        ctx.strokeRect(startX, startY, slabPxW, slabPxH);
-
-        const spacingFt = W_ft / (count - 1);
-        ctx.strokeStyle = '#0077cc';
-        ctx.lineWidth = 2 * dpr;
-        ctx.fillStyle = '#003366';
-        ctx.font = `${12 * dpr}px sans-serif`;
-
-        for (let i = 0; i < count; i++) {
-            const x = startX + (i * spacingFt * scale);
-            ctx.beginPath();
-            ctx.moveTo(x, startY);
-            ctx.lineTo(x, startY + slabPxH);
-            ctx.stroke();
-            const txt = `Beam ${i+1}`;
-            const txtW = ctx.measureText(txt).width;
-            ctx.fillText(txt, x - txtW/2, startY - 10 * dpr);
-        }
-
-        $('spacingInfo').textContent = `Spacing (s): ${spacingFt.toFixed(2)} ft`;
-        state.beamCount = count;
-        
-        const sel = $('beamSelect');
-        const currentSel = sel.value;
-        sel.innerHTML = '';
-        for(let i=1; i<=count; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.text = `Beam ${i}`;
-            sel.appendChild(opt);
-        }
-        if(currentSel) sel.value = currentSel;
+    function drawImageFit(srcCanvas, dstCanvas, bg = '#fff') {
+      if (!srcCanvas || !dstCanvas) return;
+      const ctx = dstCanvas.getContext('2d');
+      const { cw: DW, ch: DH } = ensureHiDPI(dstCanvas);
+      const SW = srcCanvas.width;
+      const SH = srcCanvas.height;
+      if (!SW || !SH) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, DW, DH);
+      if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, DW, DH); }
+      const scale = Math.min(DW / SW, DH / SH);
+      const w = SW * scale, h = SH * scale;
+      const dx = (DW - w) / 2, dy = (DH - h) / 2;
+      ctx.drawImage(srcCanvas, 0, 0, SW, SH, dx, dy, w, h);
     }
-
-    function copyCanvas(sourceId, targetId) {
-        const src = $(sourceId);
-        const tgt = $(targetId);
-        const ctxT = tgt.getContext('2d');
-        tgt.width = src.width;
-        tgt.height = src.height;
-        ctxT.drawImage(src, 0, 0);
-    }
-
-    // --- LOGIC: 1. TOTAL LOAD SUM ---
-    function checkTotalSum() {
-        const dead = parseFloat($('permanentLoad').value) || 0;
-        const snow = parseFloat($('snowLoad').value) || 0;
-        const wind = Math.abs(parseFloat($('windLoad').value) || 0);
-        const live = parseFloat($('mobileLoad').value) || 0;
+  
+    // ---------- Badges ----------
+    const BadgeSystem = (() => {
+      const _state = { earned: new Set(), meta: new Map(), order: [], initialized: false };
+  
+      function init(initialMeta = []) {
+        if (_state.initialized) return;
+        initialMeta.forEach(b => { _state.meta.set(b.id, b); _state.order.push(b.id); });
+        render();
+        _state.initialized = true;
+      }
+  
+      function earn(id) {
+        if (!_state.meta.has(id) || _state.earned.has(id)) return;
+        _state.earned.add(id);
+        render();
+        const cfg = _state.meta.get(id);
+        (cfg?.soundId && $(cfg.soundId)?.play) ? $(cfg.soundId).play() : $('successSound')?.play?.();
+        showBadgeNotification(cfg?.title || 'New Badge');
+      }
+  
+      function render() {
+        const bar = $('badgeBar');
+        if (!bar) return;
+        bar.innerHTML = '';
+        _state.order.forEach(id => {
+          const cfg = _state.meta.get(id);
+          const earned = _state.earned.has(id);
+          const wrap = document.createElement('div'); wrap.className = 'badge-wrapper';
+          const img = document.createElement('img');
+          img.className = 'badge' + (earned ? '' : ' locked');
+          img.src = cfg?.img || './img/badge-placeholder.png';
+          img.alt = cfg?.title || 'Badge';
+          img.title = earned ? (cfg?.title || 'Badge') : ((cfg?.title ? `${cfg.title} (locked)` : 'Locked badge'));
+          wrap.appendChild(img);
+          if (!earned) {
+            const lock = document.createElement('img');
+            lock.src = './img/lock.png'; lock.className = 'lock-icon';
+            wrap.appendChild(lock);
+          }
+          bar.appendChild(wrap);
+        });
+      }
+      return { init, earn };
+    })();
+  
+    // ---------- Logic: Check Total Load (Page 2) ----------
+    function checkTotalLoad() {
+        const dead = parseFloat($('permanentLoad')?.value) || 0;
+        const snow = parseFloat($('snowLoad')?.value) || 0;
+        const wind = Math.abs(parseFloat($('windLoad')?.value) || 0);
+        const live = parseFloat($('mobileLoad')?.value) || 0;
         
-        const expectedSum = dead + snow + wind + live;
-        const userSum = parseFloat($('inputTotalLoad').value);
+        // As requested: Sum of all entered loads
+        const expectedTotal = dead + snow + wind + live;
+        
+        const userInput = parseFloat($('inputTotalLoad')?.value);
         const fb = $('loadFeedback');
         const contBtn = $('continueToTributaryBtn');
-        
+
         fb.style.display = 'block';
 
-        if (Math.abs(userSum - expectedSum) <= 0.1) {
-            fb.className = 'success-box';
-            fb.innerHTML = `✅ Correct! Total Load = <strong>${expectedSum.toFixed(1)} psi</strong>`;
-            play('successSound');
-            BadgeSystem.earn('load', 'Load Specialist');
+        if (Math.abs(userInput - expectedTotal) <= 0.1) {
+            playSuccess();
+            fb.style.backgroundColor = '#e0f7e9';
+            fb.style.color = '#155724';
+            fb.innerHTML = `✅ Correct! Total Design Load = <strong>${expectedTotal.toFixed(2)} psi</strong>`;
             
-            state.totalLoad = expectedSum;
+            // Unlock continue button
             contBtn.style.display = 'inline-block';
-            contBtn.disabled = false;
+            state.totalLoad = expectedTotal;
+            BadgeSystem.earn('load');
         } else {
-            fb.className = 'error-box';
-            fb.innerHTML = `❌ Incorrect.<br><strong>Hint:</strong> Sum all entered loads: ${dead} + ${snow} + ${wind} + ${live}`;
-            play('errorSound');
+            playError();
+            fb.style.backgroundColor = '#fff3cd';
+            fb.style.color = '#856404';
+            fb.innerHTML = `❌ Incorrect. <br><strong>Hint:</strong> Just add all your load values together (Dead + Snow + |Wind| + Live).`;
             contBtn.style.display = 'none';
         }
     }
 
-    // --- LOGIC: 2. TRIBUTARY (Step A) ---
+    // ---------- Logic: Check Tributary (Page 3 Step 1) ----------
     function checkTributary() {
-        const userVal = parseFloat($('tributaryWidth').value);
-        const beamIdx = parseInt($('beamSelect').value);
+        const tribInput = parseFloat($('tributaryWidth')?.value);
+        const beamName = $('beamSelect')?.value;
+        const beamNum = parseInt(beamName.replace('Beam ', ''), 10);
+        
         const W = parseFloat($('inputWidth').value);
         const count = state.beamCount;
         const spacing = W / (count - 1);
         
-        const isEdge = (beamIdx === 1 || beamIdx === count);
-        const expected = isEdge ? (spacing / 2) : spacing;
-
+        const isEdge = (beamNum === 1 || beamNum === count);
+        const expectedTrib = isEdge ? spacing / 2 : spacing;
+        
         const fb = $('tribFeedback');
+        const gif = $('feedbackGif');
+
         fb.style.display = 'block';
 
-        if (Math.abs(userVal - expected) < 0.1) {
-            fb.className = 'success-box';
-            fb.innerHTML = `✅ Correct! Tributary width for Beam ${beamIdx} is <strong>${expected.toFixed(2)} ft</strong>.`;
-            play('successSound');
-            BadgeSystem.earn('geo', 'Geometry Guru');
+        if (Math.abs(tribInput - expectedTrib) <= 0.1) {
+            playSuccess();
+            fb.style.backgroundColor = '#e0f7e9';
+            fb.style.color = '#155724';
+            fb.innerHTML = `✅ Correct! Tributary Width = <strong>${expectedTrib.toFixed(2)} ft</strong>`;
+            if(gif) { gif.src = './img/correct1.gif'; gif.style.display = 'block'; }
             
-            state.confirmedTrib = expected;
-            // Reveal Step B
-            $('stepB_LineLoad').style.display = 'block';
-            $('stepB_LineLoad').scrollIntoView({ behavior: 'smooth' });
+            state.tributaryWidth = expectedTrib;
+            state.tributaryPoints = 100; // Simplified scoring
+            BadgeSystem.earn('accuracy');
+
+            // REVEAL STEP 2
+            $('step2_lineLoad').style.display = 'block';
+            $('step2_lineLoad').scrollIntoView({ behavior: 'smooth' });
+
         } else {
-            fb.className = 'error-box';
-            fb.innerHTML = `❌ Incorrect. <br>Hint: Interior beams = spacing ($s$). Edge beams = half spacing ($s/2$).`;
-            play('errorSound');
+            playError();
+            fb.style.backgroundColor = '#fff3cd';
+            fb.style.color = '#856404';
+            fb.innerHTML = `❌ Incorrect. <br>Hint: Interior beams = Spacing ($s$). Edge beams = $s/2$.`;
+            if(gif) { gif.src = './img/fail1.gif'; gif.style.display = 'block'; }
         }
     }
 
-    // --- LOGIC: 3. LINE LOAD (Step B) ---
+    // ---------- Logic: Check Line Load (Page 3 Step 2) ----------
     function checkLineLoad() {
-        // w = Total Load * Tributary Width
-        const expectedW = state.totalLoad * state.confirmedTrib;
-        const userW = parseFloat($('inputLineLoad').value);
-        const fb = $('lineLoadFeedback');
+        // Line Load w = Total Load (psi) * Trib Width (ft)
+        // Note: Assuming units align (user is doing straight multiplication)
+        const expectedLineLoad = state.totalLoad * state.tributaryWidth;
+        const userInput = parseFloat($('inputLineLoad').value);
         
+        const fb = $('lineLoadFeedback');
         fb.style.display = 'block';
         
-        // Tolerance: relative 2% or absolute 1
-        const diff = Math.abs(userW - expectedW);
-        const isCorrect = diff < (expectedW * 0.02 + 1);
-
-        if (isCorrect) {
-            fb.className = 'success-box';
-            fb.innerHTML = `✅ Correct! Line Load ($w$) = <strong>${expectedW.toFixed(2)} lbs/ft</strong>.`;
-            play('successSound');
+        // 2% tolerance
+        if (Math.abs(userInput - expectedLineLoad) < (expectedLineLoad * 0.02 + 0.1)) {
+            playSuccess();
+            fb.style.backgroundColor = '#e0f7e9';
+            fb.style.color = '#155724';
+            fb.innerHTML = `✅ Correct! Line Load ($w$) = <strong>${expectedLineLoad.toFixed(2)} lbs/ft</strong>`;
             
-            state.confirmedW = expectedW;
-            // Reveal Step C
-            $('stepC_Forces').style.display = 'block';
-            $('stepC_Forces').scrollIntoView({ behavior: 'smooth' });
+            state.lineLoad = expectedLineLoad;
+            
+            // REVEAL STEP 3
+            $('step3_forces').style.display = 'block';
+            $('step3_forces').scrollIntoView({ behavior: 'smooth' });
         } else {
-            fb.className = 'error-box';
-            fb.innerHTML = `❌ Incorrect.<br>Hint: Multiply Total Load (${state.totalLoad.toFixed(1)}) by Tributary Width (${state.confirmedTrib.toFixed(2)}).`;
-            play('errorSound');
+            playError();
+            fb.style.backgroundColor = '#fff3cd';
+            fb.style.color = '#856404';
+            fb.innerHTML = `❌ Incorrect. <br>Hint: Multiply Total Load (${state.totalLoad}) by Tributary Width (${state.tributaryWidth}).`;
         }
     }
 
-    // --- LOGIC: 4. FORCES (Step C) ---
+    // ---------- Logic: Check Forces (Page 3 Step 3) ----------
     function checkForces() {
-        const w = state.confirmedW; // Must use the verified line load
+        const w = state.lineLoad;
         const L = parseFloat($('inputLength').value);
         
         const expV = (w * L) / 2;
@@ -227,113 +261,254 @@
         
         const uV = parseFloat($('inputVmax').value);
         const uM = parseFloat($('inputMmax').value);
-        const uDef = parseFloat($('inputDelta').value);
+        const uD = parseFloat($('inputDelta').value);
 
         const fb = $('forcesFeedback');
         fb.style.display = 'block';
-
-        // Tolerance 5%
-        const check = (user, real) => Math.abs(user - real) < (real * 0.05 + 1.0);
-
+        
         let errors = [];
-        if (!check(uV, expV)) errors.push(`Max Shear ($V_{max}$) seems wrong. Expected approx ${expV.toFixed(1)}.`);
-        if (!check(uM, expM)) errors.push(`Max Moment ($M_{max}$) seems wrong. Expected approx ${expM.toFixed(1)}.`);
-        if (isNaN(uDef) || uDef <= 0) errors.push(`Deflection ($\delta_{max}$) must be a positive number.`);
-
-        // Store results for summary
-        state.results = { uV, uM, uDef, expW: w };
+        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 1.0); // 5% tolerance
+        
+        if (!check(uV, expV)) errors.push(`Check Vmax (Expected ~${expV.toFixed(1)})`);
+        if (!check(uM, expM)) errors.push(`Check Mmax (Expected ~${expM.toFixed(1)})`);
+        if (isNaN(uD) || uD <= 0) errors.push(`Deflection must be positive`);
 
         if (errors.length === 0) {
-            fb.className = 'success-box';
-            fb.innerHTML = `✅ <strong>Perfect Design!</strong><br>All values are correct.`;
-            play('successSound');
-            BadgeSystem.earn('eng', 'Chief Engineer');
+            playSuccess();
+            fb.style.backgroundColor = '#e0f7e9';
+            fb.style.color = '#155724';
+            fb.innerHTML = `✅ <strong>Perfect!</strong> All values correct.`;
+            
+            state.results.Vmax = uV;
+            state.results.Mmax = uM;
+            BadgeSystem.earn('strength');
+            
             $('continueToSummaryBtn').style.display = 'inline-block';
         } else {
-            fb.className = 'error-box';
-            fb.innerHTML = `❌ <strong>Review Needed:</strong><ul><li>${errors.join('</li><li>')}</li></ul>`;
-            play('errorSound');
+            playError();
+            fb.style.backgroundColor = '#fff3cd';
+            fb.style.color = '#856404';
+            fb.innerHTML = `❌ Errors found: <br> ${errors.join('<br>')}`;
         }
     }
 
-    function showSummary() {
-        const s = $('resultScreen');
-        const content = $('finalScore');
+    // ---------- Drawing Logic (Original) ----------
+    function drawSlab(width, length, spacing, beamCount) {
+      const canvas = $('slabCanvas');
+      if (!canvas) return;
+      const { dpr, cw, ch } = ensureHiDPI(canvas);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+  
+      const PAD = 40 * dpr;
+      const availW = cw - 2 * PAD, availH = ch - 2 * PAD;
+  
+      const scale = Math.max(0.0001, Math.min(availW / width, availH / length));
+      const slabWpx = width * scale, slabHpx = length * scale;
+      const originX = Math.round((cw - slabWpx) / 2);
+      const originY = Math.round((ch - slabHpx) / 2);
+  
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.fillStyle = '#e6f2fa'; ctx.fillRect(0, 0, cw, ch);
+  
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2 * dpr;
+      ctx.strokeRect(originX, originY, slabWpx, slabHpx);
+  
+      const baseFont = Math.max(10 * dpr, Math.min(16 * dpr, 12 * dpr * (scale / 50)));
+      ctx.fillStyle = '#000'; ctx.font = `${baseFont}px Arial`;
+  
+      ctx.strokeStyle = '#0066cc'; ctx.lineWidth = 2 * dpr;
+      for (let i = 0; i < beamCount; i++) {
+        const x = originX + i * spacing * scale;
+        ctx.beginPath(); ctx.moveTo(x, originY); ctx.lineTo(x, originY + slabHpx); ctx.stroke();
+        const label = `Beam ${i + 1}`;
+        const w = ctx.measureText(label).width;
+        ctx.fillText(label, x - w / 2, originY - 6 * dpr);
+      }
+  
+      ctx.fillText(`Length: ${length} ft`, originX + slabWpx + 8 * dpr, originY + slabHpx / 2);
+  
+      const bayStartX = originX, bayEndX = originX + spacing * scale, dimY = originY + slabHpx + 12 * dpr;
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 1 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(bayStartX, dimY - 5 * dpr); ctx.lineTo(bayStartX, dimY + 5 * dpr);
+      ctx.moveTo(bayEndX, dimY - 5 * dpr);   ctx.lineTo(bayEndX, dimY + 5 * dpr);
+      ctx.moveTo(bayStartX, dimY); ctx.lineTo(bayEndX, dimY); ctx.stroke();
+  
+      const spacingLabel = `Spacing: ${spacing.toFixed(2)} ft`;
+      const textW = ctx.measureText(spacingLabel).width;
+      ctx.fillText(spacingLabel, (bayStartX + bayEndX) / 2 - textW / 2, dimY + 14 * dpr);
+    }
+
+    function updateCombinedLoadImage() {
+        const div = $('combinedLoadImage');
+        const btn = $('toggleCombinedBtn');
+        if(!div || !btn) return;
+
+        const p = parseFloat($('permanentLoad').value) || 0;
+        const s = parseFloat($('snowLoad').value) || 0;
+        const w = parseFloat($('windLoad').value) || 0;
+        const m = parseFloat($('mobileLoad').value) || 0;
+
+        div.innerHTML = '';
+        const windDir = w > 0 ? '+W' : (w < 0 ? '-W' : '');
         
-        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        s.classList.add('active');
-        $('step5').classList.add('completed');
-
-        content.innerHTML = `
-            <h3>Final Report</h3>
-            <p><strong>Status:</strong> Design Completed</p>
-            <hr>
-            <p><strong>Total Surface Load:</strong> ${state.totalLoad.toFixed(2)} psi</p>
-            <p><strong>Line Load (w):</strong> ${state.confirmedW.toFixed(2)} lbs/ft</p>
-            <p><strong>Max Shear:</strong> ${state.results.uV} lbs</p>
-            <p><strong>Max Moment:</strong> ${state.results.uM} lbs-ft</p>
-            <p><strong>Badges Earned:</strong> ${BadgeSystem.earned.size} / 3</p>
-        `;
-    }
-
-    // --- NAVIGATION ---
-    function goto(id, stepNum) {
-        play('clickSound');
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        $(id).classList.add('active');
+        // Simple logic to build filename
+        // Assumes file naming convention from original code
+        let combo = '';
+        if (p>0 && s>0 && w!==0 && m>0) combo = `P+S+${windDir}+M`;
+        else if (p>0 && w!==0 && m>0) combo = `P+${windDir}+M`;
+        else if (p>0 && m>0 && s>0) combo = 'P+M+S';
+        else if (p>0 && m>0) combo = 'P+M';
+        else if (p>0) combo = 'P';
         
-        for(let i=1; i<=5; i++) {
-            const el = $(`step${i}`);
-            if(i <= stepNum) el.classList.add('completed');
-            else el.classList.remove('completed');
-        }
-
-        if(id === 'tributaryScreen') {
-            copyCanvas('slabCanvas', 'loadCanvasPreview');
+        if(combo) {
+            const img = document.createElement('img');
+            img.src = `./img/${combo}.png`;
+            img.style.maxWidth = '300px';
+            img.onerror = () => { img.style.display='none'; };
+            div.appendChild(img);
+            btn.style.display = 'inline-block';
+            btn.textContent = div.style.display==='none' ? `Show Combined Loads` : `Hide Combined Loads`;
+        } else {
+            btn.style.display='none';
         }
     }
 
-    // --- INIT ---
+    // ---------- Boot ----------
     document.addEventListener('DOMContentLoaded', () => {
-        BadgeSystem.init();
+      // Intro -> Slab
+      on($('continueBtn'), 'click', () => {
+        playClick();
+        showScreen('canvasScreen');
+        updateProgress(1);
+      });
+  
+      // Back from Slab
+      on($('backBtn'), 'click', () => {
+        playClick();
+        showScreen('introScreen');
+      });
+  
+      // Badges Init
+      BadgeSystem.init([
+        { id: 'accuracy',  title: 'Accuracy Ace', img: './img/badge1.png', soundId: 'badgeSound' },
+        { id: 'load',  title: 'Load Master', img: './img/badge2.png', soundId: 'badgeSound' },
+        { id: 'strength',  title: 'Strength Solver', img: './img/badge3.png', soundId: 'badgeSound' }
+      ]);
+  
+      // Slab -> Load
+      on($('continueToLoadBtn'), 'click', () => {
+        playClick();
+        showScreen('loadScreen');
+        const loadCanvas = $('loadCanvas');
+        const src = $('slabCanvas');
+        if (loadCanvas && src) {
+          ensureHiDPI(loadCanvas);
+          drawImageFit(src, loadCanvas, '#e6f2fa');
+        }
+      });
+  
+      // Back to Slab
+      on($('backToSlabBtn'), 'click', () => {
+        playClick();
+        showScreen('canvasScreen');
+      });
+  
+      // Draw Canvas
+      on($('drawCanvasBtn'), 'click', () => {
+        playClick();
+        const width = parseFloat($('inputWidth')?.value);
+        const length = parseFloat($('inputLength')?.value);
+        const beamCount = parseInt($('inputBeamCount')?.value, 10);
+  
+        if (isNaN(width) || isNaN(length) || isNaN(beamCount) || beamCount < 2) {
+          alert('Please enter valid dimensions.');
+          return;
+        }
+  
+        const spacing = width / (beamCount - 1);
+        state.beamCount = beamCount;
+  
+        $('spacingInfo').textContent = `Calculated spacing: ${spacing.toFixed(2)} ft`;
+        drawSlab(width, length, spacing, beamCount);
+        updateProgress(2);
+  
+        // Populate Select
+        const sel = $('beamSelect');
+        sel.innerHTML = '';
+        for (let i = 1; i <= beamCount; i++) {
+          const op = document.createElement('option');
+          op.value = `Beam ${i}`; op.textContent = `Beam ${i}`;
+          sel.appendChild(op);
+        }
+      });
 
-        on($('continueBtn'), 'click', () => goto('canvasScreen', 1));
-        
-        on($('drawCanvasBtn'), 'click', () => { play('clickSound'); drawSlab(); });
-        
-        on($('continueToLoadBtn'), 'click', () => { 
-            drawSlab(); 
-            goto('loadScreen', 2); 
-            setTimeout(() => copyCanvas('slabCanvas', 'loadCanvas'), 50);
-        });
-        
-        on($('backBtn'), 'click', () => goto('introScreen', 0));
-        on($('backToSlabBtn'), 'click', () => goto('canvasScreen', 1));
-        on($('continueToTributaryBtn'), 'click', () => goto('tributaryScreen', 3));
-        
-        // Visual Toggles
-        const loadInputs = ['permanentLoad', 'snowLoad', 'mobileLoad'];
-        loadInputs.forEach(id => {
-            on($(id), 'input', (e) => {
-               const img = $(`img${id.replace('Load','').replace(/^\w/, c => c.toUpperCase())}`);
-               if(img) img.style.display = parseFloat(e.target.value) > 0 ? 'inline-block' : 'none';
-            });
-        });
-        on($('windLoad'), 'input', (e) => {
-            const v = parseFloat(e.target.value);
-            $('imgWindPositive').style.display = v > 0 ? 'inline-block' : 'none';
-            $('imgWindNegative').style.display = v < 0 ? 'inline-block' : 'none';
-        });
+      // Load Checks
+      on($('checkTotalLoadBtn'), 'click', () => { playClick(); checkTotalLoad(); });
+      
+      // Load Images Toggle
+      const inputs = ['permanentLoad', 'snowLoad', 'mobileLoad'];
+      inputs.forEach(id => {
+          on($(id), 'input', (e) => {
+              const img = $(`img${id.replace('Load','')}`);
+              if(img) img.style.display = parseFloat(e.target.value) > 0 ? 'inline-block' : 'none';
+              updateCombinedLoadImage();
+          });
+      });
+      // Wind special case
+      on($('windLoad'), 'input', (e) => {
+          const v = parseFloat(e.target.value);
+          $('imgWindPositive').style.display = v > 0 ? 'inline-block' : 'none';
+          $('imgWindNegative').style.display = v < 0 ? 'inline-block' : 'none';
+          updateCombinedLoadImage();
+      });
+      
+      on($('toggleCombinedBtn'), 'click', () => {
+          const div = $('combinedLoadImage');
+          const btn = $('toggleCombinedBtn');
+          div.style.display = div.style.display === 'none' ? 'block' : 'none';
+          btn.textContent = div.style.display==='none' ? `Show Combined Loads` : `Hide Combined Loads`;
+          updateProgress(3);
+      });
 
-        // Calculations
-        on($('checkTotalLoadBtn'), 'click', () => { play('clickSound'); checkTotalSum(); });
-        on($('submitTribBtn'), 'click', () => { play('clickSound'); checkTributary(); });
-        on($('checkLineLoadBtn'), 'click', () => { play('clickSound'); checkLineLoad(); });
-        on($('checkForcesBtn'), 'click', () => { play('clickSound'); checkForces(); });
-        
-        on($('continueToSummaryBtn'), 'click', () => { play('clickSound'); showSummary(); });
+      // To Tributary Screen
+      on($('continueToTributaryBtn'), 'click', () => {
+          playClick();
+          showScreen('tributaryScreen');
+          // Clone canvas
+          const orig = $('loadCanvas');
+          const dest = $('loadCanvasPreview');
+          ensureHiDPI(dest);
+          drawImageFit(orig, dest, '#e6f2fa');
+          
+          // Clone combined image
+          const origImg = $('combinedLoadImage');
+          const destImg = $('combinedImagePreview');
+          destImg.innerHTML = origImg.innerHTML;
+      });
 
-        drawSlab();
+      // Tributary / Design Checks
+      on($('submitTribBtn'), 'click', () => { playClick(); checkTributary(); });
+      on($('checkLineLoadBtn'), 'click', () => { playClick(); checkLineLoad(); });
+      on($('checkForcesBtn'), 'click', () => { playClick(); checkForces(); });
+      
+      on($('continueToSummaryBtn'), 'click', () => {
+          playClick();
+          showScreen('resultScreen');
+          const scr = $('finalScore');
+          scr.innerHTML = `
+            <h3>Session Summary</h3>
+            <ul>
+              <li>Final Score: 100/100</li>
+              <li>Badges: ${document.querySelectorAll('#badgeBar .badge:not(.locked)').length}</li>
+              <li>Line Load: ${state.lineLoad.toFixed(2)} lbs/ft</li>
+              <li>Max Shear: ${state.results.Vmax} lbs</li>
+              <li>Max Moment: ${state.results.Mmax} lbs-ft</li>
+            </ul>
+          `;
+          updateProgress(5);
+      });
+
     });
-
 })();
