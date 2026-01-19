@@ -30,9 +30,8 @@
     .badge { width: 48px; height: 48px; border-radius: 8px; border: 1px solid #ddd; background: #fff; object-fit: contain; }
     .badge.locked { filter: grayscale(100%) opacity(0.5); }
 
-    /* Calculation Grids */
-    .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px; margin: 20px auto; text-align: left; }
-    .input-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    /* Calculation Cards */
+    .input-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; vertical-align: top; margin: 10px; width: 200px; text-align: left; }
     .input-card label { font-weight: bold; display: block; margin-bottom: 5px; }
     .input-card small { color: #666; font-size: 0.85em; }
 
@@ -40,6 +39,9 @@
     .feedback-box { margin-top: 15px; padding: 15px; border-radius: 5px; display: none; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto; }
     .success-box { background-color: #e0f7e9; border-left: 5px solid #2ecc71; color: #155724; }
     .error-box { background-color: #fff3cd; border-left: 5px solid #ffc107; color: #856404; }
+
+    /* Step Container styling for sequential reveal */
+    .calc-step { width: 100%; max-width: 800px; margin-top: 30px; padding-top: 20px; border-top: 2px dashed #aaa; display: none; }
 
     /* Notification Banner */
     #badgeNotification { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; background-color: rgba(0, 119, 204, 0.95); color: white; border-radius: 10px; z-index: 2000; font-size: 1.5em; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -71,15 +73,11 @@
       <div style="text-align:left;">
         <label>Width of Slab (W) (ft):</label><br>
         <input type="number" id="inputWidth" step="0.1" value="20"><br>
-        
         <label>Length of Slab (L) (ft):</label><br>
         <input type="number" id="inputLength" step="0.1" value="30"><br>
-        
         <label>Number of Beams:</label><br>
         <input type="number" id="inputBeamCount" step="1" min="2" value="4"><br>
-        
         <div id="spacingInfo" style="margin:10px 0; font-weight:bold; color:#0077cc;"></div>
-        
         <button id="drawCanvasBtn">Update Visuals</button>
         <br>
         <button id="backBtn" style="background:#666;">← Back</button>
@@ -98,36 +96,29 @@
         <label>Permanent (Dead) Load:</label><br>
         <input type="number" id="permanentLoad" step="0.1"> 
         <img id="imgPermanent" class="load-icon" src="./img/load-permanent.png"><br>
-
         <label>Snow Load:</label><br>
         <input type="number" id="snowLoad" step="0.1">
         <img id="imgSnow" class="load-icon" src="./img/load-snow.png"><br>
-
         <label>Wind Load (+/-):</label><br>
         <input type="number" id="windLoad" step="0.1">
         <img id="imgWindPositive" class="load-icon" src="./img/load-wind.png">
         <img id="imgWindNegative" class="load-icon" src="./img/load-wind-negative.png"><br>
-
         <label>Mobile (Live) Load:</label><br>
         <input type="number" id="mobileLoad" step="0.1">
         <img id="imgMobile" class="load-icon" src="./img/load-mobile.png"><br>
       </div>
-      
       <div style="max-width:300px;">
         <canvas id="loadCanvas" width="300" height="300"></canvas>
         <div id="combinedLoadImage" style="margin-top:10px;"></div>
-
         <div id="totalLoadSection" style="margin-top:20px; border-top: 2px dashed #aaa; padding-top:15px; background: rgba(255,255,255,0.8); border-radius:8px; padding:10px;">
           <label style="font-weight:bold; color:#d35400;">Calculate Total Design Load:</label><br>
           <small>(Sum of all loads entered)</small><br>
           <input type="number" id="inputTotalLoad" step="0.1" placeholder="Total psi"><br>
           <button id="checkTotalLoadBtn" style="background:#d35400; width:100%;">Check Total Load</button>
-          
           <div id="loadFeedback" class="feedback-box"></div>
         </div>
       </div>
     </div>
-    
     <div style="margin-top:20px;">
         <button id="backToSlabBtn" style="background:#666;">← Back</button>
         <button id="continueToTributaryBtn" disabled style="display:none;">Continue to Calculation →</button>
@@ -137,7 +128,7 @@
   <div id="tributaryScreen" class="screen">
     <h2>3. Structural Analysis</h2>
     
-    <div id="tributarySection" style="width:100%; max-width:800px;">
+    <div id="stepA_Tributary" style="width:100%; max-width:800px;">
       <div style="display:flex; justify-content:center; gap:20px; align-items:center;">
           <canvas id="loadCanvasPreview" width="200" height="200"></canvas>
           <div style="text-align:left;">
@@ -152,35 +143,43 @@
       <div id="tribFeedback" class="feedback-box"></div>
     </div>
 
-    <div id="finalCalcSection" style="display:none; width:100%; margin-top:30px; padding-top:20px; border-top:2px dashed #aaa;">
-      <h3>Step B: Beam Design Values</h3>
-      <p>Calculate the following based on your <strong>Total Design Load</strong> and <strong>Tributary Width</strong>.</p>
+    <div id="stepB_LineLoad" class="calc-step">
+      <h3>Step B: Line Load ($w$)</h3>
+      <p>Calculate the uniform line load on the beam.</p>
       
-      <div class="calc-grid">
+      <div class="input-card" style="width:300px; display:block; margin:0 auto;">
+          <label>Line Load ($w$)</label>
+          <small>Formula: Total Load (psi) × Tributary Width (ft)</small><br>
+          <input type="number" id="inputLineLoad" step="0.01" placeholder="lbs/ft">
+          <button id="checkLineLoadBtn" style="width:100%;">Check Line Load</button>
+      </div>
+      <div id="lineLoadFeedback" class="feedback-box"></div>
+    </div>
+
+    <div id="stepC_Forces" class="calc-step">
+      <h3>Step C: Forces & Deflection</h3>
+      <p>Calculate Max Shear, Moment, and Deflection using $w$.</p>
+      
+      <div style="display:flex; justify-content:center; flex-wrap:wrap;">
         <div class="input-card">
-            <label>1. Line Load ($w$)</label>
-            <small>Unit: lbs/ft (Total Load × Trib Width)</small><br>
-            <input type="number" id="inputEd" step="0.01" placeholder="lbs/ft">
-        </div>
-        <div class="input-card">
-            <label>2. Max Shear ($V_{max}$)</label>
+            <label>Max Shear ($V_{max}$)</label>
             <small>Unit: lbs or kN</small><br>
             <input type="number" id="inputVmax" step="0.01" placeholder="wL / 2">
         </div>
         <div class="input-card">
-            <label>3. Max Moment ($M_{max}$)</label>
+            <label>Max Moment ($M_{max}$)</label>
             <small>Unit: lbs-ft or kN-m</small><br>
             <input type="number" id="inputMmax" step="0.01" placeholder="wL² / 8">
         </div>
         <div class="input-card">
-            <label>4. Max Deflection ($\delta_{max}$)</label>
+            <label>Max Deflection ($\delta_{max}$)</label>
             <small>Unit: inches or mm</small><br>
             <input type="number" id="inputDelta" step="0.001" placeholder="Any positive #">
         </div>
       </div>
 
-      <button id="checkFinalValuesBtn" style="font-size:1.1em; padding:15px 40px; background:#27ae60;">Verify Design</button>
-      <div id="finalFeedback" class="feedback-box"></div>
+      <button id="checkForcesBtn" style="font-size:1.1em; padding:15px 40px; background:#27ae60;">Verify Forces</button>
+      <div id="forcesFeedback" class="feedback-box"></div>
       
       <button id="continueToSummaryBtn" style="display:none; margin-top:20px;">Finish Project →</button>
     </div>
