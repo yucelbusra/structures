@@ -368,7 +368,7 @@
         ctx.fillText(label, x - w / 2, originY - 6 * dpr);
       }
   
-      ctx.fillText(`Length: ${length} m`, originX + slabWpx + 8 * dpr, originY + slabHpx / 2);
+      ctx.fillText(`Length: ${length} ft`, originX + slabWpx + 8 * dpr, originY + slabHpx / 2);
   
       const bayStartX = originX, bayEndX = originX + spacing * scale, dimY = originY + slabHpx + 12 * dpr;
       ctx.strokeStyle = '#000'; ctx.lineWidth = 1 * dpr;
@@ -600,7 +600,7 @@
           BadgeSystem.earn('designEd');              // unlock the 2nd badge
 
           if (feedbackBox) {
-            feedbackBox.innerHTML = `✅ <strong>Correct.</strong> Expected E<sub>d</sub> = <strong>${expected2.toFixed(2)} kN/m</strong>`;
+            feedbackBox.innerHTML = `✅ <strong>Correct.</strong> Expected E<sub>d</sub> = <strong>${expected2.toFixed(2)} lbs/ft</strong>`;
             feedbackBox.style.backgroundColor = '#e0f7e9';
             feedbackBox.style.borderLeft = '4px solid #2ecc71';
             feedbackBox.style.display = 'block';
@@ -916,6 +916,7 @@
     });
 
   })();
+
 
 
 
