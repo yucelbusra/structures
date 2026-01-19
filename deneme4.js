@@ -90,7 +90,7 @@
       ctx.drawImage(srcCanvas, 0, 0, SW, SH, dx, dy, w, h);
     }
   
-    // ---------- Badges (Updated Rendering) ----------
+    // ---------- Badges ----------
     const BadgeSystem = (() => {
       const _state = { earned: new Set(), meta: new Map(), order: [], initialized: false };
   
@@ -119,7 +119,7 @@
           const earned = _state.earned.has(id);
           
           const wrap = document.createElement('div'); 
-          wrap.className = 'badge-wrapper'; // Relies on new CSS
+          wrap.className = 'badge-wrapper'; 
           
           const img = document.createElement('img');
           img.className = 'badge' + (earned ? '' : ' locked');
@@ -396,17 +396,23 @@
         }
       });
 
-      // Load Screen Checks
+      // Load Checks
       on($('checkTotalLoadBtn'), 'click', () => { playClick(); checkTotalLoad(); });
       
-      const inputs = ['permanentLoad', 'snowLoad', 'mobileLoad'];
-      inputs.forEach(id => {
-          on($(id), 'input', (e) => {
-              const img = $(`img${id.replace('Load','')}`);
+      // --- FIXED IMAGE LISTENER LOGIC ---
+      const loadMap = {
+          'permanentLoad': 'imgPermanent',
+          'snowLoad': 'imgSnow',
+          'mobileLoad': 'imgMobile'
+      };
+      Object.keys(loadMap).forEach(inputId => {
+          on($(inputId), 'input', (e) => {
+              const img = $(loadMap[inputId]);
               if(img) img.style.display = parseFloat(e.target.value) > 0 ? 'inline-block' : 'none';
               updateCombinedLoadImage();
           });
       });
+
       on($('windLoad'), 'input', (e) => {
           const v = parseFloat(e.target.value);
           $('imgWindPositive').style.display = v > 0 ? 'inline-block' : 'none';
