@@ -94,9 +94,9 @@
     <div style="display:flex;gap:40px;align-items:flex-start;">
       <div>
         <h2>Slab Design Parameters</h2>
-        <label for="inputWidth">Width of Slab (W) (m):</label><br>
+        <label for="inputWidth">Width of Slab (W) (ft):</label><br>
         <input type="number" id="inputWidth" step="0.1"><br>
-        <label for="inputLength">Length of Slab (L) (m):</label><br>
+        <label for="inputLength">Length of Slab (L) (ft):</label><br>
         <input type="number" id="inputLength" step="0.1"><br>
         <label for="inputBeamCount">Number of Beams:</label><br>
         <input type="number" id="inputBeamCount" step="1" min="2"><br>
@@ -120,20 +120,20 @@
       <div>
         <h2>Load & Design Factors (allows negative entry)</h2>
 
-        <label>Permanent Load (kN/m²):</label><br>
+        <label>Permanent (Dead) Load (psi):</label><br>
         <input type="number" id="permanentLoad" step="0.1"><br>
         <img id="imgPermanent" src="./img/load-permanent.png" alt="Permanent load" style="height:30px;display:none;"><br>
 
-        <label>Snow Load (kN/m²):</label><br>
+        <label>Snow Load (psi):</label><br>
         <input type="number" id="snowLoad" step="0.1"><br>
         <img id="imgSnow" src="./img/load-snow.png" alt="Snow load" style="height:30px;display:none;"><br>
 
-        <label>Wind Load (kN/m²):</label><br>
+        <label>Wind Load (psi):</label><br>
         <input type="number" id="windLoad" step="0.1"><br>
         <img id="imgWindPositive" src="./img/load-wind.png" alt="Wind load positive" style="height:30px;display:none;">
         <img id="imgWindNegative" src="./img/load-wind-negative.png" alt="Wind load negative" style="height:30px;display:none;"><br>
 
-        <label>Mobile Load (kN/m²):</label><br>
+        <label>Mobile (Live) Load (psi):</label><br>
         <input type="number" id="mobileLoad" step="0.1"><br>
         <img id="imgMobile" src="./img/load-mobile.png" alt="Mobile load" style="height:30px;display:none;"><br>
 
@@ -169,7 +169,7 @@
         <label for="beamSelect">Choose Beam:</label><br>
         <select id="beamSelect"></select><br><br>
 
-        <label for="tributaryWidth">Enter Tributary Width (m):</label><br>
+        <label for="tributaryWidth">Enter Tributary Width (ft):</label><br>
         <input type="number" id="tributaryWidth" step="0.1"><br><br>
 
         <button id="submitLoadBtn">Submit Tributary Width</button>
@@ -331,6 +331,7 @@
   <script src="deneme4.js"></script>
 </body>
 </html>
+
 
 
 
