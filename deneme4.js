@@ -1,4 +1,3 @@
-// deneme4.js
 (function () {
     // ---------- tiny helpers ----------
     const $ = (id) => document.getElementById(id);
@@ -17,12 +16,8 @@
       banner.style.display = 'block';
       banner.style.opacity = '1';
       banner.style.animation = 'none';
-      setTimeout(() => {
-        banner.style.animation = 'fadeInOut 3s forwards';
-      }, 10);
-      setTimeout(() => {
-        banner.style.display = 'none';
-      }, 3000);
+      setTimeout(() => { banner.style.animation = 'fadeInOut 3s forwards'; }, 10);
+      setTimeout(() => { banner.style.display = 'none'; }, 3000);
     }
   
     // ---------- nav / progress ----------
@@ -48,17 +43,13 @@
     // ---------- app state ----------
     const state = {
       beamCount: 0,
-      totalLoad: 0,       // Confirmed Total Design Load (psi)
-      tributaryWidth: 0,  // Confirmed Tributary Width (ft)
-      lineLoad: 0,        // Confirmed Line Load (lbs/ft)
-      
-      tributaryAttempts: 0,
-      tributaryPoints: 100,
-      
+      totalLoad: 0,       
+      tributaryWidth: 0,  
+      lineLoad: 0,        
       results: { Mmax: null, Vmax: null }
     };
 
-    // ---------- HiDPI Canvas Helper (Original) ----------
+    // ---------- HiDPI Canvas Helper ----------
     function ensureHiDPI(canvas) {
       if (!canvas) return { dpr: 1, cw: 0, ch: 0 };
       const dpr = window.devicePixelRatio || 1;
@@ -99,7 +90,7 @@
       ctx.drawImage(srcCanvas, 0, 0, SW, SH, dx, dy, w, h);
     }
   
-    // ---------- Badges ----------
+    // ---------- Badges (Updated Rendering) ----------
     const BadgeSystem = (() => {
       const _state = { earned: new Set(), meta: new Map(), order: [], initialized: false };
   
@@ -126,16 +117,22 @@
         _state.order.forEach(id => {
           const cfg = _state.meta.get(id);
           const earned = _state.earned.has(id);
-          const wrap = document.createElement('div'); wrap.className = 'badge-wrapper';
+          
+          const wrap = document.createElement('div'); 
+          wrap.className = 'badge-wrapper'; // Relies on new CSS
+          
           const img = document.createElement('img');
           img.className = 'badge' + (earned ? '' : ' locked');
           img.src = cfg?.img || './img/badge-placeholder.png';
           img.alt = cfg?.title || 'Badge';
-          img.title = earned ? (cfg?.title || 'Badge') : ((cfg?.title ? `${cfg.title} (locked)` : 'Locked badge'));
+          img.title = earned ? (cfg?.title) : ((cfg?.title ? `${cfg.title} (locked)` : 'Locked badge'));
+          
           wrap.appendChild(img);
+          
           if (!earned) {
             const lock = document.createElement('img');
-            lock.src = './img/lock.png'; lock.className = 'lock-icon';
+            lock.src = './img/lock.png'; 
+            lock.className = 'lock-icon';
             wrap.appendChild(lock);
           }
           bar.appendChild(wrap);
@@ -144,16 +141,15 @@
       return { init, earn };
     })();
   
-    // ---------- Logic: Check Total Load (Page 2) ----------
+    // ---------- Logic Functions ----------
+
     function checkTotalLoad() {
         const dead = parseFloat($('permanentLoad')?.value) || 0;
         const snow = parseFloat($('snowLoad')?.value) || 0;
         const wind = Math.abs(parseFloat($('windLoad')?.value) || 0);
         const live = parseFloat($('mobileLoad')?.value) || 0;
         
-        // As requested: Sum of all entered loads
         const expectedTotal = dead + snow + wind + live;
-        
         const userInput = parseFloat($('inputTotalLoad')?.value);
         const fb = $('loadFeedback');
         const contBtn = $('continueToTributaryBtn');
@@ -164,9 +160,8 @@
             playSuccess();
             fb.style.backgroundColor = '#e0f7e9';
             fb.style.color = '#155724';
-            fb.innerHTML = `✅ Correct! Total Design Load = <strong>${expectedTotal.toFixed(2)} psi</strong>`;
+            fb.innerHTML = `✅ Correct! Total = <strong>${expectedTotal.toFixed(2)} psi</strong>`;
             
-            // Unlock continue button
             contBtn.style.display = 'inline-block';
             state.totalLoad = expectedTotal;
             BadgeSystem.earn('load');
@@ -174,12 +169,11 @@
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect. <br><strong>Hint:</strong> Just add all your load values together (Dead + Snow + |Wind| + Live).`;
+            fb.innerHTML = `❌ Incorrect.<br>Hint: Sum of Dead + Snow + |Wind| + Live.`;
             contBtn.style.display = 'none';
         }
     }
 
-    // ---------- Logic: Check Tributary (Page 3 Step 1) ----------
     function checkTributary() {
         const tribInput = parseFloat($('tributaryWidth')?.value);
         const beamName = $('beamSelect')?.value;
@@ -205,53 +199,43 @@
             if(gif) { gif.src = './img/correct1.gif'; gif.style.display = 'block'; }
             
             state.tributaryWidth = expectedTrib;
-            state.tributaryPoints = 100; // Simplified scoring
             BadgeSystem.earn('accuracy');
 
-            // REVEAL STEP 2
             $('step2_lineLoad').style.display = 'block';
             $('step2_lineLoad').scrollIntoView({ behavior: 'smooth' });
-
         } else {
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect. <br>Hint: Interior beams = Spacing ($s$). Edge beams = $s/2$.`;
+            fb.innerHTML = `❌ Incorrect.<br>Hint: Interior = Spacing ($s$). Edge = $s/2$.`;
             if(gif) { gif.src = './img/fail1.gif'; gif.style.display = 'block'; }
         }
     }
 
-    // ---------- Logic: Check Line Load (Page 3 Step 2) ----------
     function checkLineLoad() {
-        // Line Load w = Total Load (psi) * Trib Width (ft)
-        // Note: Assuming units align (user is doing straight multiplication)
         const expectedLineLoad = state.totalLoad * state.tributaryWidth;
         const userInput = parseFloat($('inputLineLoad').value);
-        
         const fb = $('lineLoadFeedback');
+        
         fb.style.display = 'block';
         
-        // 2% tolerance
-        if (Math.abs(userInput - expectedLineLoad) < (expectedLineLoad * 0.02 + 0.1)) {
+        if (Math.abs(userInput - expectedLineLoad) < (expectedLineLoad * 0.02 + 0.5)) {
             playSuccess();
             fb.style.backgroundColor = '#e0f7e9';
             fb.style.color = '#155724';
-            fb.innerHTML = `✅ Correct! Line Load ($w$) = <strong>${expectedLineLoad.toFixed(2)} lbs/ft</strong>`;
-            
+            fb.innerHTML = `✅ Correct! Line Load = <strong>${expectedLineLoad.toFixed(2)} lbs/ft</strong>`;
             state.lineLoad = expectedLineLoad;
             
-            // REVEAL STEP 3
             $('step3_forces').style.display = 'block';
             $('step3_forces').scrollIntoView({ behavior: 'smooth' });
         } else {
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect. <br>Hint: Multiply Total Load (${state.totalLoad}) by Tributary Width (${state.tributaryWidth}).`;
+            fb.innerHTML = `❌ Incorrect.<br>Hint: Total Load (${state.totalLoad}) × Tributary Width (${state.tributaryWidth}).`;
         }
     }
 
-    // ---------- Logic: Check Forces (Page 3 Step 3) ----------
     function checkForces() {
         const w = state.lineLoad;
         const L = parseFloat($('inputLength').value);
@@ -267,7 +251,7 @@
         fb.style.display = 'block';
         
         let errors = [];
-        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 1.0); // 5% tolerance
+        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 1.0);
         
         if (!check(uV, expV)) errors.push(`Check Vmax (Expected ~${expV.toFixed(1)})`);
         if (!check(uM, expM)) errors.push(`Check Mmax (Expected ~${expM.toFixed(1)})`);
@@ -278,7 +262,6 @@
             fb.style.backgroundColor = '#e0f7e9';
             fb.style.color = '#155724';
             fb.innerHTML = `✅ <strong>Perfect!</strong> All values correct.`;
-            
             state.results.Vmax = uV;
             state.results.Mmax = uM;
             BadgeSystem.earn('strength');
@@ -288,11 +271,11 @@
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Errors found: <br> ${errors.join('<br>')}`;
+            fb.innerHTML = `❌ Errors found:<br>${errors.join('<br>')}`;
         }
     }
 
-    // ---------- Drawing Logic (Original) ----------
+    // ---------- Drawing & UI (Original Logic) ----------
     function drawSlab(width, length, spacing, beamCount) {
       const canvas = $('slabCanvas');
       if (!canvas) return;
@@ -302,7 +285,6 @@
   
       const PAD = 40 * dpr;
       const availW = cw - 2 * PAD, availH = ch - 2 * PAD;
-  
       const scale = Math.max(0.0001, Math.min(availW / width, availH / length));
       const slabWpx = width * scale, slabHpx = length * scale;
       const originX = Math.round((cw - slabWpx) / 2);
@@ -352,10 +334,8 @@
 
         div.innerHTML = '';
         const windDir = w > 0 ? '+W' : (w < 0 ? '-W' : '');
-        
-        // Simple logic to build filename
-        // Assumes file naming convention from original code
         let combo = '';
+        
         if (p>0 && s>0 && w!==0 && m>0) combo = `P+S+${windDir}+M`;
         else if (p>0 && w!==0 && m>0) combo = `P+${windDir}+M`;
         else if (p>0 && m>0 && s>0) combo = 'P+M+S';
@@ -378,19 +358,10 @@
     // ---------- Boot ----------
     document.addEventListener('DOMContentLoaded', () => {
       // Intro -> Slab
-      on($('continueBtn'), 'click', () => {
-        playClick();
-        showScreen('canvasScreen');
-        updateProgress(1);
-      });
+      on($('continueBtn'), 'click', () => { playClick(); showScreen('canvasScreen'); updateProgress(1); });
+      on($('backBtn'), 'click', () => { playClick(); showScreen('introScreen'); });
   
-      // Back from Slab
-      on($('backBtn'), 'click', () => {
-        playClick();
-        showScreen('introScreen');
-      });
-  
-      // Badges Init
+      // Badges
       BadgeSystem.init([
         { id: 'accuracy',  title: 'Accuracy Ace', img: './img/badge1.png', soundId: 'badgeSound' },
         { id: 'load',  title: 'Load Master', img: './img/badge2.png', soundId: 'badgeSound' },
@@ -403,17 +374,9 @@
         showScreen('loadScreen');
         const loadCanvas = $('loadCanvas');
         const src = $('slabCanvas');
-        if (loadCanvas && src) {
-          ensureHiDPI(loadCanvas);
-          drawImageFit(src, loadCanvas, '#e6f2fa');
-        }
+        if (loadCanvas && src) { ensureHiDPI(loadCanvas); drawImageFit(src, loadCanvas, '#e6f2fa'); }
       });
-  
-      // Back to Slab
-      on($('backToSlabBtn'), 'click', () => {
-        playClick();
-        showScreen('canvasScreen');
-      });
+      on($('backToSlabBtn'), 'click', () => { playClick(); showScreen('canvasScreen'); });
   
       // Draw Canvas
       on($('drawCanvasBtn'), 'click', () => {
@@ -421,33 +384,21 @@
         const width = parseFloat($('inputWidth')?.value);
         const length = parseFloat($('inputLength')?.value);
         const beamCount = parseInt($('inputBeamCount')?.value, 10);
-  
-        if (isNaN(width) || isNaN(length) || isNaN(beamCount) || beamCount < 2) {
-          alert('Please enter valid dimensions.');
-          return;
-        }
-  
+        if (isNaN(width) || isNaN(length) || isNaN(beamCount) || beamCount < 2) { alert('Invalid dimensions'); return; }
         const spacing = width / (beamCount - 1);
         state.beamCount = beamCount;
-  
         $('spacingInfo').textContent = `Calculated spacing: ${spacing.toFixed(2)} ft`;
         drawSlab(width, length, spacing, beamCount);
         updateProgress(2);
-  
-        // Populate Select
-        const sel = $('beamSelect');
-        sel.innerHTML = '';
+        const sel = $('beamSelect'); sel.innerHTML = '';
         for (let i = 1; i <= beamCount; i++) {
-          const op = document.createElement('option');
-          op.value = `Beam ${i}`; op.textContent = `Beam ${i}`;
-          sel.appendChild(op);
+          const op = document.createElement('option'); op.value = `Beam ${i}`; op.textContent = `Beam ${i}`; sel.appendChild(op);
         }
       });
 
-      // Load Checks
+      // Load Screen Checks
       on($('checkTotalLoadBtn'), 'click', () => { playClick(); checkTotalLoad(); });
       
-      // Load Images Toggle
       const inputs = ['permanentLoad', 'snowLoad', 'mobileLoad'];
       inputs.forEach(id => {
           on($(id), 'input', (e) => {
@@ -456,7 +407,6 @@
               updateCombinedLoadImage();
           });
       });
-      // Wind special case
       on($('windLoad'), 'input', (e) => {
           const v = parseFloat(e.target.value);
           $('imgWindPositive').style.display = v > 0 ? 'inline-block' : 'none';
@@ -466,23 +416,18 @@
       
       on($('toggleCombinedBtn'), 'click', () => {
           const div = $('combinedLoadImage');
-          const btn = $('toggleCombinedBtn');
           div.style.display = div.style.display === 'none' ? 'block' : 'none';
-          btn.textContent = div.style.display==='none' ? `Show Combined Loads` : `Hide Combined Loads`;
+          $('toggleCombinedBtn').textContent = div.style.display==='none' ? `Show Combined Loads` : `Hide Combined Loads`;
           updateProgress(3);
       });
 
-      // To Tributary Screen
+      // To Tributary
       on($('continueToTributaryBtn'), 'click', () => {
           playClick();
           showScreen('tributaryScreen');
-          // Clone canvas
           const orig = $('loadCanvas');
           const dest = $('loadCanvasPreview');
-          ensureHiDPI(dest);
-          drawImageFit(orig, dest, '#e6f2fa');
-          
-          // Clone combined image
+          ensureHiDPI(dest); drawImageFit(orig, dest, '#e6f2fa');
           const origImg = $('combinedLoadImage');
           const destImg = $('combinedImagePreview');
           destImg.innerHTML = origImg.innerHTML;
@@ -496,8 +441,7 @@
       on($('continueToSummaryBtn'), 'click', () => {
           playClick();
           showScreen('resultScreen');
-          const scr = $('finalScore');
-          scr.innerHTML = `
+          $('finalScore').innerHTML = `
             <h3>Session Summary</h3>
             <ul>
               <li>Final Score: 100/100</li>
@@ -509,6 +453,5 @@
           `;
           updateProgress(5);
       });
-
     });
 })();
