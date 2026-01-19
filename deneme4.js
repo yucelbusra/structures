@@ -43,7 +43,9 @@
     // --- STATE ---
     const state = {
         beamCount: 0,
-        totalLoad: 0, // Stores the verified total load (sum)
+        totalLoad: 0,
+        confirmedTrib: 0, // Stores the correctly verified tributary width
+        confirmedW: 0,    // Stores the correctly verified line load
         results: {}
     };
 
@@ -124,16 +126,14 @@
         ctxT.drawImage(src, 0, 0);
     }
 
-    // --- LOGIC: TOTAL LOAD SUM ---
+    // --- LOGIC: 1. TOTAL LOAD SUM ---
     function checkTotalSum() {
         const dead = parseFloat($('permanentLoad').value) || 0;
         const snow = parseFloat($('snowLoad').value) || 0;
         const wind = Math.abs(parseFloat($('windLoad').value) || 0);
         const live = parseFloat($('mobileLoad').value) || 0;
         
-        // As requested: Sum of all loads entered
         const expectedSum = dead + snow + wind + live;
-        
         const userSum = parseFloat($('inputTotalLoad').value);
         const fb = $('loadFeedback');
         const contBtn = $('continueToTributaryBtn');
@@ -146,19 +146,18 @@
             play('successSound');
             BadgeSystem.earn('load', 'Load Specialist');
             
-            // Unlock next step
             state.totalLoad = expectedSum;
             contBtn.style.display = 'inline-block';
             contBtn.disabled = false;
         } else {
             fb.className = 'error-box';
-            fb.innerHTML = `❌ Incorrect.<br><strong>Hint:</strong> Just add all the load values together:<br> Dead + Snow + |Wind| + Live`;
+            fb.innerHTML = `❌ Incorrect.<br><strong>Hint:</strong> Sum all entered loads: ${dead} + ${snow} + ${wind} + ${live}`;
             play('errorSound');
             contBtn.style.display = 'none';
         }
     }
 
-    // --- LOGIC: TRIBUTARY ---
+    // --- LOGIC: 2. TRIBUTARY (Step A) ---
     function checkTributary() {
         const userVal = parseFloat($('tributaryWidth').value);
         const beamIdx = parseInt($('beamSelect').value);
@@ -178,60 +177,75 @@
             play('successSound');
             BadgeSystem.earn('geo', 'Geometry Guru');
             
-            $('finalCalcSection').style.display = 'block';
-            $('finalCalcSection').scrollIntoView({ behavior: 'smooth' });
+            state.confirmedTrib = expected;
+            // Reveal Step B
+            $('stepB_LineLoad').style.display = 'block';
+            $('stepB_LineLoad').scrollIntoView({ behavior: 'smooth' });
         } else {
             fb.className = 'error-box';
-            fb.innerHTML = `❌ Incorrect. <br>Hint: Interior beams carry full spacing ($s$). Edge beams carry half ($s/2$).`;
+            fb.innerHTML = `❌ Incorrect. <br>Hint: Interior beams = spacing ($s$). Edge beams = half spacing ($s/2$).`;
             play('errorSound');
         }
     }
 
-    // --- LOGIC: FINAL VALUES ---
-    function calculateExpectedValues() {
-        // Line Load (w) = Total Pressure Load * Tributary Width
-        // NOTE: Previous prompt used ULS factors. This prompt emphasized "Total Load Entered".
-        // To be consistent with "Design Load" passed from Step 3, we use state.totalLoad (the sum).
+    // --- LOGIC: 3. LINE LOAD (Step B) ---
+    function checkLineLoad() {
+        // w = Total Load * Tributary Width
+        const expectedW = state.totalLoad * state.confirmedTrib;
+        const userW = parseFloat($('inputLineLoad').value);
+        const fb = $('lineLoadFeedback');
         
-        const trib = parseFloat($('tributaryWidth').value);
+        fb.style.display = 'block';
         
-        // 1. Line Load w (lbs/ft)
-        const w = state.totalLoad * trib; 
+        // Tolerance: relative 2% or absolute 1
+        const diff = Math.abs(userW - expectedW);
+        const isCorrect = diff < (expectedW * 0.02 + 1);
 
-        // 2. Beam Forces
-        const L = parseFloat($('inputLength').value);
-        const Vmax = (w * L) / 2;
-        const Mmax = (w * L * L) / 8;
-
-        return { w, Vmax, Mmax };
+        if (isCorrect) {
+            fb.className = 'success-box';
+            fb.innerHTML = `✅ Correct! Line Load ($w$) = <strong>${expectedW.toFixed(2)} lbs/ft</strong>.`;
+            play('successSound');
+            
+            state.confirmedW = expectedW;
+            // Reveal Step C
+            $('stepC_Forces').style.display = 'block';
+            $('stepC_Forces').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            fb.className = 'error-box';
+            fb.innerHTML = `❌ Incorrect.<br>Hint: Multiply Total Load (${state.totalLoad.toFixed(1)}) by Tributary Width (${state.confirmedTrib.toFixed(2)}).`;
+            play('errorSound');
+        }
     }
 
-    function checkFinalDesign() {
-        const exp = calculateExpectedValues();
+    // --- LOGIC: 4. FORCES (Step C) ---
+    function checkForces() {
+        const w = state.confirmedW; // Must use the verified line load
+        const L = parseFloat($('inputLength').value);
         
-        const uEd = parseFloat($('inputEd').value); // Line load input
+        const expV = (w * L) / 2;
+        const expM = (w * L * L) / 8;
+        
         const uV = parseFloat($('inputVmax').value);
         const uM = parseFloat($('inputMmax').value);
         const uDef = parseFloat($('inputDelta').value);
 
-        const fb = $('finalFeedback');
+        const fb = $('forcesFeedback');
         fb.style.display = 'block';
 
         // Tolerance 5%
-        const check = (user, real) => Math.abs(user - real) < (real * 0.05 + 0.5);
+        const check = (user, real) => Math.abs(user - real) < (real * 0.05 + 1.0);
 
         let errors = [];
-        if (!check(uEd, exp.w)) errors.push(`Line Load ($w$) seems wrong. <br>Hint: Total Load (${state.totalLoad}) × Tributary Width.`);
-        if (!check(uV, exp.Vmax)) errors.push(`Max Shear ($V_{max}$) seems wrong. Expected approx ${exp.Vmax.toFixed(1)}.`);
-        if (!check(uM, exp.Mmax)) errors.push(`Max Moment ($M_{max}$) seems wrong. Expected approx ${exp.Mmax.toFixed(1)}.`);
+        if (!check(uV, expV)) errors.push(`Max Shear ($V_{max}$) seems wrong. Expected approx ${expV.toFixed(1)}.`);
+        if (!check(uM, expM)) errors.push(`Max Moment ($M_{max}$) seems wrong. Expected approx ${expM.toFixed(1)}.`);
         if (isNaN(uDef) || uDef <= 0) errors.push(`Deflection ($\delta_{max}$) must be a positive number.`);
 
         // Store results for summary
-        state.results = { uEd, uV, uM, uDef, expEd: exp.w };
+        state.results = { uV, uM, uDef, expW: w };
 
         if (errors.length === 0) {
             fb.className = 'success-box';
-            fb.innerHTML = `✅ <strong>Perfect Design!</strong><br>All values are within tolerance.`;
+            fb.innerHTML = `✅ <strong>Perfect Design!</strong><br>All values are correct.`;
             play('successSound');
             BadgeSystem.earn('eng', 'Chief Engineer');
             $('continueToSummaryBtn').style.display = 'inline-block';
@@ -252,10 +266,10 @@
 
         content.innerHTML = `
             <h3>Final Report</h3>
-            <p><strong>Status:</strong> Passed</p>
+            <p><strong>Status:</strong> Design Completed</p>
             <hr>
             <p><strong>Total Surface Load:</strong> ${state.totalLoad.toFixed(2)} psi</p>
-            <p><strong>Line Load (w):</strong> ${state.results.uEd} lbs/ft</p>
+            <p><strong>Line Load (w):</strong> ${state.confirmedW.toFixed(2)} lbs/ft</p>
             <p><strong>Max Shear:</strong> ${state.results.uV} lbs</p>
             <p><strong>Max Moment:</strong> ${state.results.uM} lbs-ft</p>
             <p><strong>Badges Earned:</strong> ${BadgeSystem.earned.size} / 3</p>
@@ -294,9 +308,7 @@
         });
         
         on($('backBtn'), 'click', () => goto('introScreen', 0));
-        
         on($('backToSlabBtn'), 'click', () => goto('canvasScreen', 1));
-        
         on($('continueToTributaryBtn'), 'click', () => goto('tributaryScreen', 3));
         
         // Visual Toggles
@@ -313,10 +325,12 @@
             $('imgWindNegative').style.display = v < 0 ? 'inline-block' : 'none';
         });
 
-        // Main Interaction Buttons
+        // Calculations
         on($('checkTotalLoadBtn'), 'click', () => { play('clickSound'); checkTotalSum(); });
         on($('submitTribBtn'), 'click', () => { play('clickSound'); checkTributary(); });
-        on($('checkFinalValuesBtn'), 'click', () => { play('clickSound'); checkFinalDesign(); });
+        on($('checkLineLoadBtn'), 'click', () => { play('clickSound'); checkLineLoad(); });
+        on($('checkForcesBtn'), 'click', () => { play('clickSound'); checkForces(); });
+        
         on($('continueToSummaryBtn'), 'click', () => { play('clickSound'); showSummary(); });
 
         drawSlab();
