@@ -4,202 +4,214 @@
   <meta charset="UTF-8" />
   <title>Structural Engineer Roleplay</title>
   <style>
-    /* Basic Layout & Colors */
-    body { margin: 0; font-family: sans-serif; background-color: #cce7f6; }
-    .screen { display: none; min-height: 100vh; width: 100vw; flex-direction: column; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
-    .active { display: flex; }
+    /* --- ORIGINAL CSS PRESERVED --- */
+    .step{padding:8px 12px;border-radius:8px;background:#ccc;font-weight:bold;color:#fff}
+    .step.active{background:#0077cc}
+    .step.completed{background:#2ecc71}
+    body{margin:0;font-family:sans-serif;background-color:#cce7f6}
+    .screen{display:none;min-height:100vh;width:100vw;justify-content:center;align-items:center;flex-direction:column;text-align:center;padding:20px;box-sizing:border-box}
+    .active{display:flex}
+    canvas{border:1px solid #888;margin-top:20px}
+
+    /* Badge bar */
+    #badgeBar{min-height:48px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .badge-wrapper{position:relative;width:48px;height:48px}
+    .badge{width:100%;height:100%;border-radius:8px;object-fit:contain;border:1px solid #e0e0e0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+    .badge.locked{filter:grayscale(100%) opacity(.5)}
+    .lock-icon{position:absolute;top:50%;left:50%;width:22px;height:22px;transform:translate(-50%,-50%);opacity:.7;pointer-events:none}
+
+    button{margin-top:10px;padding:10px 20px;font-size:16px;border:none;border-radius:8px;background-color:#0077cc;color:#fff;cursor:pointer}
+    button:hover{background-color:#005fa3}
+    button:disabled{background-color:#999;cursor:not-allowed}
+    .hint-button{margin-left:10px;padding:2px 8px;font-size:14px}
+    input,select{padding:6px;margin-top:5px;margin-bottom:10px;width:180px}
+
+    #feedback{margin-top:20px;padding:10px;background-color:#e0f7e9;border-left:4px solid #2ecc71;display:none; text-align:left;}
+    .feedback-error{background-color:#fff3cd !important; border-left:4px solid #f39c12 !important;}
     
-    /* Progress Bar */
-    #progressBar { display: flex; gap: 20px; margin: 20px 0 40px 0; justify-content: center; }
-    .step { padding: 8px 12px; border-radius: 8px; background: #ccc; font-weight: bold; color: #fff; }
-    .step.active { background: #0077cc; }
-    .step.completed { background: #2ecc71; }
+    #hintModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center;z-index:1000}
+    #hintModal img{max-width:90vw;max-height:80vh}
+    
+    /* Animation for Badge */
+    @keyframes fadeInOut {
+        0% { opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
 
-    /* Inputs & Buttons */
-    input, select { padding: 8px; margin: 5px 0 15px 0; width: 180px; border: 1px solid #ccc; border-radius: 4px; }
-    button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background-color: #0077cc; color: #fff; cursor: pointer; margin-top: 10px; }
-    button:hover { background-color: #005fa3; }
-    button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.6; }
-
-    /* Canvas & Images */
-    canvas { border: 1px solid #888; margin-top: 20px; background: white; }
-    img.load-icon { height: 30px; display: none; vertical-align: middle; }
-
-    /* Badges */
-    #badgeBar { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; min-height: 50px; }
-    .badge { width: 48px; height: 48px; border-radius: 8px; border: 1px solid #ddd; background: #fff; object-fit: contain; }
-    .badge.locked { filter: grayscale(100%) opacity(0.5); }
-
-    /* Calculation Cards */
-    .input-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; vertical-align: top; margin: 10px; width: 200px; text-align: left; }
-    .input-card label { font-weight: bold; display: block; margin-bottom: 5px; }
-    .input-card small { color: #666; font-size: 0.85em; }
-
-    /* Feedback Box */
-    .feedback-box { margin-top: 15px; padding: 15px; border-radius: 5px; display: none; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto; }
-    .success-box { background-color: #e0f7e9; border-left: 5px solid #2ecc71; color: #155724; }
-    .error-box { background-color: #fff3cd; border-left: 5px solid #ffc107; color: #856404; }
-
-    /* Step Container styling for sequential reveal */
-    .calc-step { width: 100%; max-width: 800px; margin-top: 30px; padding-top: 20px; border-top: 2px dashed #aaa; display: none; }
-
-    /* Notification Banner */
-    #badgeNotification { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; background-color: rgba(0, 119, 204, 0.95); color: white; border-radius: 10px; z-index: 2000; font-size: 1.5em; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; display: none; } }
+    /* Container for sequential steps */
+    .calc-block { margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.6); border-radius: 8px; display: none; width: 100%; max-width: 500px; }
   </style>
 </head>
 <body>
-
-  <div id="progressBar">
+  
+  <div id="progressBar" style="display:flex;gap:20px;margin:20px 0 40px 0;">
     <div class="step" id="step1">🔹 Intro</div>
     <div class="step" id="step2">📏 Slab</div>
     <div class="step" id="step3">📊 Loads</div>
-    <div class="step" id="step4">📐 Design</div>
+    <div class="step" id="step4">⚖️ Design</div>
     <div class="step" id="step5">🎓 Summary</div>
   </div>
 
-  <div id="badgeBar"></div>
+  <div id="badgeBar" aria-label="Badges" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-30px 20px 20px 20px;"></div>
 
   <div id="introScreen" class="screen active">
-    <h1>🧑‍🔧 Structural Design Simulator</h1>
-    <img src="./img/welcome.gif" alt="Welcome" style="max-width: 300px; margin: 20px 0;">
-    <p>Design timber beams for a sustainable building project.<br>Calculate loads, forces, and deflections.</p>
-    <button id="continueBtn">Start Project →</button>
+    <h1>🧑‍🔧 Welcome, Construction Managers!</h1>
+    <img src="./img/welcome.gif" alt="Welcome">
+    <p>
+      Your task is to design timber beams for a sustainable building project.<br>
+      Start by entering your slab design parameters.
+    </p>
+
+    <p style="font-size: 0.85em; opacity: 0.85; margin-top: 12px;">
+      <strong>Disclaimer:</strong> This tool is an educational research prototype under development. 
+      Outputs are for learning purposes only and not for professional use.
+    </p>
+
+    <p style="font-size: 0.85em; opacity: 0.85;">
+      <strong>Credits:</strong> Concept & Development – Busra Yucel, Auburn University; 
+      Conceptual & Technical Support – Alper Turgut & Jose Henriques, Hasselt University
+    </p>
+
+    <button id="continueBtn">I'm Ready! →</button>
   </div>
 
   <div id="canvasScreen" class="screen">
-    <h2>1. Define Slab Geometry</h2>
-    <div style="display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
-      <div style="text-align:left;">
-        <label>Width of Slab (W) (ft):</label><br>
-        <input type="number" id="inputWidth" step="0.1" value="20"><br>
-        <label>Length of Slab (L) (ft):</label><br>
-        <input type="number" id="inputLength" step="0.1" value="30"><br>
-        <label>Number of Beams:</label><br>
-        <input type="number" id="inputBeamCount" step="1" min="2" value="4"><br>
-        <div id="spacingInfo" style="margin:10px 0; font-weight:bold; color:#0077cc;"></div>
-        <button id="drawCanvasBtn">Update Visuals</button>
-        <br>
-        <button id="backBtn" style="background:#666;">← Back</button>
-      </div>
+    <div style="display:flex;gap:40px;align-items:flex-start;">
       <div>
-        <canvas id="slabCanvas" width="400" height="400"></canvas>
+        <h2>Slab Design Parameters</h2>
+        <label for="inputWidth">Width of Slab (W) (ft):</label><br>
+        <input type="number" id="inputWidth" step="0.1"><br>
+        <label for="inputLength">Length of Slab (L) (ft):</label><br>
+        <input type="number" id="inputLength" step="0.1"><br>
+        <label for="inputBeamCount">Number of Beams:</label><br>
+        <input type="number" id="inputBeamCount" step="1" min="2"><br>
+        <p id="spacingInfo" style="margin-top:10px;font-weight:bold;"></p>
+        <button id="drawCanvasBtn">Visualize Design</button>
+        <button id="backBtn">← Back</button>
       </div>
+      <img src="./img/SlabDimensions.png" alt="Slab illustration" style="max-width:300px;">
     </div>
-    <button id="continueToLoadBtn" style="margin-top:30px; width: 200px;">Continue to Loads →</button>
+
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-top:1px;">
+      <canvas id="slabCanvas" width="400" height="400" style="border:1px solid #888;"></canvas>
+    </div>
+
+    <button id="continueToLoadBtn" style="margin-top:20px;">Continue →</button>
   </div>
 
   <div id="loadScreen" class="screen">
-    <h2>2. Apply Loads (psi)</h2>
-    <div style="display:flex; gap:40px; align-items:flex-start; justify-content:center; flex-wrap:wrap;">
-      <div style="text-align:left;">
+    <div style="display:flex;gap:20px;align-items:flex-start;">
+      <div>
+        <h2>Load Parameters (psi)</h2>
+
         <label>Permanent (Dead) Load:</label><br>
-        <input type="number" id="permanentLoad" step="0.1"> 
-        <img id="imgPermanent" class="load-icon" src="./img/load-permanent.png"><br>
+        <input type="number" id="permanentLoad" step="0.1"><br>
+        <img id="imgPermanent" src="./img/load-permanent.png" style="height:30px;display:none;"><br>
+
         <label>Snow Load:</label><br>
-        <input type="number" id="snowLoad" step="0.1">
-        <img id="imgSnow" class="load-icon" src="./img/load-snow.png"><br>
-        <label>Wind Load (+/-):</label><br>
-        <input type="number" id="windLoad" step="0.1">
-        <img id="imgWindPositive" class="load-icon" src="./img/load-wind.png">
-        <img id="imgWindNegative" class="load-icon" src="./img/load-wind-negative.png"><br>
+        <input type="number" id="snowLoad" step="0.1"><br>
+        <img id="imgSnow" src="./img/load-snow.png" style="height:30px;display:none;"><br>
+
+        <label>Wind Load:</label><br>
+        <input type="number" id="windLoad" step="0.1"><br>
+        <img id="imgWindPositive" src="./img/load-wind.png" style="height:30px;display:none;">
+        <img id="imgWindNegative" src="./img/load-wind-negative.png" style="height:30px;display:none;"><br>
+
         <label>Mobile (Live) Load:</label><br>
-        <input type="number" id="mobileLoad" step="0.1">
-        <img id="imgMobile" class="load-icon" src="./img/load-mobile.png"><br>
-      </div>
-      <div style="max-width:300px;">
-        <canvas id="loadCanvas" width="300" height="300"></canvas>
-        <div id="combinedLoadImage" style="margin-top:10px;"></div>
-        <div id="totalLoadSection" style="margin-top:20px; border-top: 2px dashed #aaa; padding-top:15px; background: rgba(255,255,255,0.8); border-radius:8px; padding:10px;">
-          <label style="font-weight:bold; color:#d35400;">Calculate Total Design Load:</label><br>
-          <small>(Sum of all loads entered)</small><br>
-          <input type="number" id="inputTotalLoad" step="0.1" placeholder="Total psi"><br>
-          <button id="checkTotalLoadBtn" style="background:#d35400; width:100%;">Check Total Load</button>
-          <div id="loadFeedback" class="feedback-box"></div>
+        <input type="number" id="mobileLoad" step="0.1"><br>
+        <img id="imgMobile" src="./img/load-mobile.png" style="height:30px;display:none;"><br>
+
+        <div style="display:flex;flex-direction:column;align-items:center;">
+            <canvas id="loadCanvas" width="400" height="400" style="border:1px solid #888;"></canvas>
+            <div id="combinedLoadImage" style="display:none;text-align:center;margin:10px 0;"></div>
+            <button id="toggleCombinedBtn" style="display:none;margin:10px;font-size:14px;">Show Combined Loads</button>
         </div>
+
+        <div style="margin-top:20px; padding:15px; border:2px dashed #0077cc; border-radius:10px; background:white;">
+            <h3>Calculate Total Design Load</h3>
+            <p style="font-size:0.9em; margin-bottom:10px;">Sum all entered loads (Dead + Snow + |Wind| + Live)</p>
+            <label>Total Load (psi):</label><br>
+            <input type="number" id="inputTotalLoad" step="0.1"><br>
+            <button id="checkTotalLoadBtn">Check Total</button>
+            <div id="loadFeedback" style="display:none; margin-top:10px; padding:8px; border-radius:5px;"></div>
+        </div>
+
+        <button id="backToSlabBtn">← Back</button>
+        <button type="button" id="continueToTributaryBtn" style="display:none; background-color:#2ecc71;">Continue →</button>
       </div>
-    </div>
-    <div style="margin-top:20px;">
-        <button id="backToSlabBtn" style="background:#666;">← Back</button>
-        <button id="continueToTributaryBtn" disabled style="display:none;">Continue to Calculation →</button>
     </div>
   </div>
 
   <div id="tributaryScreen" class="screen">
-    <h2>3. Structural Analysis</h2>
-    
-    <div id="stepA_Tributary" style="width:100%; max-width:800px;">
-      <div style="display:flex; justify-content:center; gap:20px; align-items:center;">
-          <canvas id="loadCanvasPreview" width="200" height="200"></canvas>
-          <div style="text-align:left;">
-            <h3>Step A: Tributary Width</h3>
-            <label>Select Beam to Analyze:</label><br>
-            <select id="beamSelect"></select><br>
-            <label>Enter Tributary Width (ft):</label><br>
+    <h2>Design Calculation Phase</h2>
+
+    <div style="display:flex;gap:40px;align-items:flex-start;">
+      <div>
+        <canvas id="loadCanvasPreview" width="300" height="300" style="border:1px solid #888;"></canvas>
+        <div id="combinedImagePreview" style="text-align:center;margin-top:10px;"></div>
+      </div>
+
+      <div style="text-align:left; min-width:300px;">
+        
+        <div id="step1_trib">
+            <label for="beamSelect">Choose Beam:</label><br>
+            <select id="beamSelect"></select><br><br>
+
+            <label for="tributaryWidth">Enter Tributary Width (ft):</label><br>
             <input type="number" id="tributaryWidth" step="0.1"><br>
-            <button id="submitTribBtn">Check Width</button>
-          </div>
-      </div>
-      <div id="tribFeedback" class="feedback-box"></div>
-    </div>
 
-    <div id="stepB_LineLoad" class="calc-step">
-      <h3>Step B: Line Load ($w$)</h3>
-      <p>Calculate the uniform line load on the beam.</p>
-      
-      <div class="input-card" style="width:300px; display:block; margin:0 auto;">
-          <label>Line Load ($w$)</label>
-          <small>Formula: Total Load (psi) × Tributary Width (ft)</small><br>
-          <input type="number" id="inputLineLoad" step="0.01" placeholder="lbs/ft">
-          <button id="checkLineLoadBtn" style="width:100%;">Check Line Load</button>
-      </div>
-      <div id="lineLoadFeedback" class="feedback-box"></div>
-    </div>
+            <button id="submitTribBtn">Check Tributary Width</button>
+            <div id="tribFeedback" style="display:none; margin-top:10px; padding:10px; border-radius:5px;"></div>
+            <img id="feedbackGif" style="display:none;max-width:200px;margin-top:10px;">
+        </div>
 
-    <div id="stepC_Forces" class="calc-step">
-      <h3>Step C: Forces & Deflection</h3>
-      <p>Calculate Max Shear, Moment, and Deflection using $w$.</p>
-      
-      <div style="display:flex; justify-content:center; flex-wrap:wrap;">
-        <div class="input-card">
-            <label>Max Shear ($V_{max}$)</label>
-            <small>Unit: lbs or kN</small><br>
-            <input type="number" id="inputVmax" step="0.01" placeholder="wL / 2">
+        <div id="step2_lineLoad" class="calc-block">
+            <h3>Calculate Line Load ($w$)</h3>
+            <p>Formula: Total Load (psi) × Tributary Width (ft)</p>
+            <label>Line Load ($w$) (lbs/ft):</label><br>
+            <input type="number" id="inputLineLoad" step="0.1"><br>
+            <button id="checkLineLoadBtn">Check Line Load</button>
+            <div id="lineLoadFeedback" style="display:none; margin-top:10px; padding:10px; border-radius:5px;"></div>
         </div>
-        <div class="input-card">
-            <label>Max Moment ($M_{max}$)</label>
-            <small>Unit: lbs-ft or kN-m</small><br>
-            <input type="number" id="inputMmax" step="0.01" placeholder="wL² / 8">
-        </div>
-        <div class="input-card">
-            <label>Max Deflection ($\delta_{max}$)</label>
-            <small>Unit: inches or mm</small><br>
-            <input type="number" id="inputDelta" step="0.001" placeholder="Any positive #">
-        </div>
-      </div>
 
-      <button id="checkForcesBtn" style="font-size:1.1em; padding:15px 40px; background:#27ae60;">Verify Forces</button>
-      <div id="forcesFeedback" class="feedback-box"></div>
-      
-      <button id="continueToSummaryBtn" style="display:none; margin-top:20px;">Finish Project →</button>
+        <div id="step3_forces" class="calc-block">
+            <h3>Calculate Forces</h3>
+            <p>Use your verified $w$ and span $L$.</p>
+
+            <label>Max Shear ($V_{max}$) (lbs):</label><br>
+            <input type="number" id="inputVmax" step="0.1"><br>
+
+            <label>Max Moment ($M_{max}$) (lbs-ft):</label><br>
+            <input type="number" id="inputMmax" step="0.1"><br>
+            
+            <label>Max Deflection ($\delta_{max}$):</label><br>
+            <input type="number" id="inputDelta" step="0.001"><br>
+
+            <button id="checkForcesBtn">Check Forces</button>
+            <div id="forcesFeedback" style="display:none; margin-top:10px; padding:10px; border-radius:5px;"></div>
+        </div>
+
+        <button id="continueToSummaryBtn" style="margin-top:20px; display:none;">Finish → Summary</button>
+
+      </div>
     </div>
   </div>
 
   <div id="resultScreen" class="screen">
-    <h2>🏆 Project Summary</h2>
-    <div id="finalScore" style="background:white; padding:30px; border-radius:10px; text-align:left; display:inline-block; min-width:300px;"></div>
-    <br>
-    <button onclick="location.reload()" style="background:#666;">Start New Project</button>
+    <h2>🏁 Final Score</h2>
+    <div id="finalScore"></div>
+    <button onclick="location.reload()">Start Over</button>
   </div>
 
-  <div id="badgeNotification"></div>
-  <audio id="clickSound" src="./sounds/click.mp3"></audio>
-  <audio id="successSound" src="./sounds/success.wav"></audio>
-  <audio id="errorSound" src="./sounds/error.wav"></audio>
-  <audio id="badgeSound" src="./sounds/badge.mp3"></audio>
+  <div id="badgeNotification" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:20px 40px; background-color:rgba(0, 119, 204, 0.9); color:white; border-radius:10px; z-index:2000; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-size:1.5em; font-weight:bold;"></div>
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <audio id="clickSound" src="./sounds/click.mp3" preload="auto"></audio>
+  <audio id="successSound" src="./sounds/success.wav" preload="auto"></audio>
+  <audio id="errorSound" src="./sounds/error.wav" preload="auto"></audio>
+  <audio id="badgeSound" src="./sounds/badge.mp3" preload="auto"></audio>
+
   <script src="deneme4.js"></script>
 </body>
 </html>
