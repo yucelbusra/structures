@@ -236,13 +236,29 @@
         }
     }
 
-    function checkForces() {
-        const w = state.lineLoad;
-        const L = parseFloat($('inputLength').value);
+function checkForces() {
+        // 1. Get values from state and inputs
+        const w_lbs_ft = state.lineLoad;           // lbs/ft
+        const L_ft = parseFloat($('inputLength').value); // ft
         
-        const expV = (w * L) / 2;
-        const expM = (w * L * L) / 8;
+        // 2. Constants (Assumed)
+        const E = 30e6; // 30,000,000 psi
+        const I = 1000; // in^4
+
+        // 3. Calculate Expected Shear (V) and Moment (M)
+        // V and M are typically kept in lbs and lbs-ft for simple beam output
+        const expV = (w_lbs_ft * L_ft) / 2;
+        const expM = (w_lbs_ft * L_ft * L_ft) / 8;
+
+        // 4. Calculate Expected Deflection (Delta)
+        // CRITICAL: Convert units to Inches for the formula [5*w*L^4 / 384*E*I]
+        const w_in = w_lbs_ft / 12;      // convert lbs/ft -> lbs/in
+        const L_in = L_ft * 12;          // convert ft -> in
         
+        // Formula: (5 * w * L^4) / (384 * E * I)
+        const expD = (5 * w_in * Math.pow(L_in, 4)) / (384 * E * I);
+
+        // 5. Get User Inputs
         const uV = parseFloat($('inputVmax').value);
         const uM = parseFloat($('inputMmax').value);
         const uD = parseFloat($('inputDelta').value);
@@ -251,17 +267,22 @@
         fb.style.display = 'block';
         
         let errors = [];
-        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 1.0);
+        // Tolerance check (5% + small buffer)
+        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 0.1);
         
-        if (!check(uV, expV)) errors.push(`Check Vmax (Expected ~${expV.toFixed(1)})`);
-        if (!check(uM, expM)) errors.push(`Check Mmax (Expected ~${expM.toFixed(1)})`);
-        if (isNaN(uD) || uD <= 0) errors.push(`Deflection must be positive`);
+        // 6. Verification Logic
+        if (!check(uV, expV)) errors.push(`Check Vmax (Expected ~${expV.toFixed(1)} lbs)`);
+        if (!check(uM, expM)) errors.push(`Check Mmax (Expected ~${expM.toFixed(1)} lbs-ft)`);
+        if (!check(uD, expD)) errors.push(`Check Deflection (Expected ~${expD.toFixed(3)} in)`);
 
+        // 7. Result Handling
         if (errors.length === 0) {
             playSuccess();
             fb.style.backgroundColor = '#e0f7e9';
             fb.style.color = '#155724';
-            fb.innerHTML = `✅ <strong>Perfect!</strong> All values correct.`;
+            fb.innerHTML = `✅ <strong>Perfect!</strong> All values correct.<br>
+                            <small>Using E=30x10⁶ psi, I=1000 in⁴</small>`;
+            
             state.results.Vmax = uV;
             state.results.Mmax = uM;
             BadgeSystem.earn('strength');
@@ -461,3 +482,4 @@
       });
     });
 })();
+
