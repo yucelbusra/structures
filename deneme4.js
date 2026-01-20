@@ -42,12 +42,18 @@
   
     // ---------- app state ----------
     const state = {
+      score: 100,         // NEW: Score tracking
       beamCount: 0,
       totalLoad: 0,       
       tributaryWidth: 0,  
       lineLoad: 0,        
       results: { Mmax: null, Vmax: null }
     };
+
+    // Helper to deduct points
+    function deductPoints(amount) {
+        state.score = Math.max(0, state.score - amount);
+    }
 
     // ---------- HiDPI Canvas Helper ----------
     function ensureHiDPI(canvas) {
@@ -166,10 +172,11 @@
             state.totalLoad = expectedTotal;
             BadgeSystem.earn('load');
         } else {
+            deductPoints(10); // Penalty
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect.<br>Hint: Sum of Dead + Snow + |Wind| + Live.`;
+            fb.innerHTML = `❌ Incorrect (-10 pts).<br>Hint: Sum of Dead + Snow + |Wind| + Live.`;
             contBtn.style.display = 'none';
         }
     }
@@ -204,10 +211,11 @@
             $('step2_lineLoad').style.display = 'block';
             $('step2_lineLoad').scrollIntoView({ behavior: 'smooth' });
         } else {
+            deductPoints(10); // Penalty
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect.<br>Hint: Interior = Spacing ($s$). Edge = $s/2$.`;
+            fb.innerHTML = `❌ Incorrect (-10 pts).<br>Hint: Interior = Spacing ($s$). Edge = $s/2$.`;
             if(gif) { gif.src = './img/fail1.gif'; gif.style.display = 'block'; }
         }
     }
@@ -229,59 +237,78 @@
             $('step3_forces').style.display = 'block';
             $('step3_forces').scrollIntoView({ behavior: 'smooth' });
         } else {
+            deductPoints(10); // Penalty
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect.<br>Hint: Total Load (${state.totalLoad}) × Tributary Width (${state.tributaryWidth}).`;
+            fb.innerHTML = `❌ Incorrect (-10 pts).<br>Hint: Total Load (${state.totalLoad}) × Tributary Width (${state.tributaryWidth}).`;
         }
     }
 
-function checkForces() {
-        // 1. Get values from state and inputs
-        const w_lbs_ft = state.lineLoad;           // lbs/ft
-        const L_ft = parseFloat($('inputLength').value); // ft
+    function checkForces() {
+        // 1. Get values
+        const w_lbs_ft = state.lineLoad;
+        const L_ft = parseFloat($('inputLength').value);
         
-        // 2. Constants (Assumed)
-        const E = 30e6; // 30,000,000 psi
+        // 2. Constants
+        const E = 30e6; // psi
         const I = 1000; // in^4
 
-        // 3. Calculate Expected Shear (V) and Moment (M)
-        // V and M are typically kept in lbs and lbs-ft for simple beam output
+        // 3. Expected Values
         const expV = (w_lbs_ft * L_ft) / 2;
         const expM = (w_lbs_ft * L_ft * L_ft) / 8;
 
-        // 4. Calculate Expected Deflection (Delta)
-        // CRITICAL: Convert units to Inches for the formula [5*w*L^4 / 384*E*I]
-        const w_in = w_lbs_ft / 12;      // convert lbs/ft -> lbs/in
-        const L_in = L_ft * 12;          // convert ft -> in
-        
-        // Formula: (5 * w * L^4) / (384 * E * I)
+        const w_in = w_lbs_ft / 12;
+        const L_in = L_ft * 12;
         const expD = (5 * w_in * Math.pow(L_in, 4)) / (384 * E * I);
 
-        // 5. Get User Inputs
+        // 4. User Inputs
         const uV = parseFloat($('inputVmax').value);
         const uM = parseFloat($('inputMmax').value);
         const uD = parseFloat($('inputDelta').value);
 
         const fb = $('forcesFeedback');
         fb.style.display = 'block';
-        
-        let errors = [];
-        // Tolerance check (5% + small buffer)
-        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 0.1);
-        
-        // 6. Verification Logic
-        if (!check(uV, expV)) errors.push(`Check Vmax: (wL/2)`);
-        if (!check(uM, expM)) errors.push(`Check Mmax: (wL²/8)`);
-        if (!check(uD, expD)) errors.push(`Check Deflection: (5wL^4/384EI)`);
 
-        // 7. Result Handling
-        if (errors.length === 0) {
+        // 5. Check Separately
+        let feedbackHTML = "";
+        let allCorrect = true;
+        const check = (u, e) => Math.abs(u - e) < (e * 0.05 + 0.1); // 5% tolerance
+
+        // Check Shear
+        if (check(uV, expV)) {
+            feedbackHTML += `<div style="color:#155724; margin-bottom:4px;">✅ <strong>Vmax:</strong> Correct</div>`;
+        } else {
+            allCorrect = false;
+            deductPoints(10); // Deduct for V error
+            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Vmax:</strong> Incorrect (-10 pts). Expected ~${expV.toFixed(1)}</div>`;
+        }
+
+        // Check Moment
+        if (check(uM, expM)) {
+            feedbackHTML += `<div style="color:#155724; margin-bottom:4px;">✅ <strong>Mmax:</strong> Correct</div>`;
+        } else {
+            allCorrect = false;
+            deductPoints(10); // Deduct for M error
+            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Mmax:</strong> Incorrect (-10 pts). Expected ~${expM.toFixed(1)}</div>`;
+        }
+
+        // Check Deflection
+        if (check(uD, expD)) {
+            feedbackHTML += `<div style="color:#155724; margin-bottom:4px;">✅ <strong>Delta:</strong> Correct</div>`;
+        } else {
+            allCorrect = false;
+            deductPoints(10); // Deduct for D error
+            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Delta:</strong> Incorrect (-10 pts). Expected ~${expD.toFixed(4)}</div>`;
+        }
+
+        // 6. Display Result
+        fb.innerHTML = feedbackHTML;
+
+        if (allCorrect) {
             playSuccess();
             fb.style.backgroundColor = '#e0f7e9';
-            fb.style.color = '#155724';
-            fb.innerHTML = `✅ <strong>Perfect!</strong> All values correct.<br>
-                            <small>Using E=30x10⁶ psi, I=1000 in⁴</small>`;
+            fb.style.borderLeft = '4px solid #2ecc71';
             
             state.results.Vmax = uV;
             state.results.Mmax = uM;
@@ -291,12 +318,11 @@ function checkForces() {
         } else {
             playError();
             fb.style.backgroundColor = '#fff3cd';
-            fb.style.color = '#856404';
-            fb.innerHTML = `❌ Errors found:<br>${errors.join('<br>')}`;
+            fb.style.borderLeft = '4px solid #f39c12';
         }
     }
 
-    // ---------- Drawing & UI (Original Logic) ----------
+    // ---------- Drawing & UI ----------
     function drawSlab(width, length, spacing, beamCount) {
       const canvas = $('slabCanvas');
       if (!canvas) return;
@@ -420,7 +446,6 @@ function checkForces() {
       // Load Checks
       on($('checkTotalLoadBtn'), 'click', () => { playClick(); checkTotalLoad(); });
       
-      // --- FIXED IMAGE LISTENER LOGIC ---
       const loadMap = {
           'permanentLoad': 'imgPermanent',
           'snowLoad': 'imgSnow',
@@ -471,7 +496,7 @@ function checkForces() {
           $('finalScore').innerHTML = `
             <h3>Session Summary</h3>
             <ul>
-              <li>Final Score: 100/100</li>
+              <li><strong>Final Score: ${state.score}/100</strong></li>
               <li>Badges: ${document.querySelectorAll('#badgeBar .badge:not(.locked)').length}</li>
               <li>Line Load: ${state.lineLoad.toFixed(2)} lbs/ft</li>
               <li>Max Shear: ${state.results.Vmax} lbs</li>
@@ -482,5 +507,3 @@ function checkForces() {
       });
     });
 })();
-
-
