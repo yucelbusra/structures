@@ -215,7 +215,7 @@
             playError();
             fb.style.backgroundColor = '#fff3cd';
             fb.style.color = '#856404';
-            fb.innerHTML = `❌ Incorrect (-10 pts).<br>Hint: Interior = Spacing ($s$). Edge = $s/2$.`;
+            fb.innerHTML = `❌ Incorrect (-10 pts).<br>Hint: Interior = Spacing (s). Edge = s/2.`;
             if(gif) { gif.src = './img/fail1.gif'; gif.style.display = 'block'; }
         }
     }
@@ -281,7 +281,7 @@
         } else {
             allCorrect = false;
             deductPoints(10); // Deduct for V error
-            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Vmax:</strong> Incorrect (-10 pts). Expected ~${expV.toFixed(1)}</div>`;
+            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Vmax:</strong> Incorrect (-10 pts).`;
         }
 
         // Check Moment
@@ -290,7 +290,7 @@
         } else {
             allCorrect = false;
             deductPoints(10); // Deduct for M error
-            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Mmax:</strong> Incorrect (-10 pts). Expected ~${expM.toFixed(1)}</div>`;
+            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Mmax:</strong> Incorrect (-10 pts). `;
         }
 
         // Check Deflection
@@ -299,7 +299,7 @@
         } else {
             allCorrect = false;
             deductPoints(10); // Deduct for D error
-            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Delta:</strong> Incorrect (-10 pts). Expected ~${expD.toFixed(4)}</div>`;
+            feedbackHTML += `<div style="color:#856404; margin-bottom:4px;">❌ <strong>Delta:</strong> Incorrect (-10 pts). `;
         }
 
         // 6. Display Result
@@ -507,3 +507,4 @@
       });
     });
 })();
+
