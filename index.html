@@ -311,8 +311,8 @@
     <!-- BENDING CHECK -->
     <div id="bu_bendingBlock" class="calc-block">
       <h3 style="margin-top:0;">✏️ Check 1: Bending → n₁</h3>
-      <div class="hint-box">
-        F<sub>b</sub>' = F<sub>b</sub> × C<sub>A</sub> &nbsp;|&nbsp;
+      <div id="hint_bending" class="hint-box" style="display:none;">
+        💡 <strong>Hint:</strong> F<sub>b</sub>' = F<sub>b</sub> × C<sub>A</sub> &nbsp;|&nbsp;
         S<sub>req</sub> = M<sub>max</sub>(in·lbs) / F<sub>b</sub>' &nbsp;|&nbsp;
         n₁ = S<sub>req</sub> / S<sub>x</sub> → round up
       </div>
@@ -340,8 +340,8 @@
     <!-- SHEAR CHECK -->
     <div id="bu_shearBlock" class="calc-block">
       <h3 style="margin-top:0;">✏️ Check 2: Shear → n₂</h3>
-      <div class="hint-box">
-        F<sub>v</sub>' = F<sub>v</sub> × C<sub>A</sub> &nbsp;|&nbsp;
+      <div id="hint_shear" class="hint-box" style="display:none;">
+        💡 <strong>Hint:</strong> F<sub>v</sub>' = F<sub>v</sub> × C<sub>A</sub> &nbsp;|&nbsp;
         A<sub>req</sub> = 1.5 × V<sub>max</sub> / F<sub>v</sub>' &nbsp;|&nbsp;
         n₂ = A<sub>req</sub> / A<sub>x</sub> → round up
       </div>
@@ -369,8 +369,8 @@
     <!-- DEFLECTION CHECK -->
     <div id="bu_deflBlock" class="calc-block">
       <h3 style="margin-top:0;">✏️ Check 3: Deflection → n₃</h3>
-      <div class="hint-box">
-        Δ<sub>max</sub> = L/360 (in) &nbsp;|&nbsp;
+      <div id="hint_defl" class="hint-box" style="display:none;">
+        💡 <strong>Hint:</strong> Δ<sub>max</sub> = L(ft)×12 / 360 (in) &nbsp;|&nbsp;
         I<sub>req</sub> = 5wL⁴ / (384·E·Δ<sub>max</sub>) &nbsp;|&nbsp;
         n₃ = I<sub>req</sub> / I<sub>x</sub> → round up
       </div>
@@ -461,7 +461,9 @@
     <!-- STEP 1: Compute Mmax Vmax Δmax -->
     <div style="background:white; border-radius:8px; padding:16px 20px; margin-bottom:16px; box-shadow:0 2px 5px rgba(0,0,0,0.08);">
       <h3 style="margin-top:0;">Step 1: Allowable Deflection</h3>
-      <div class="hint-box">Δ<sub>max</sub> = L(ft) × 12 / 360 &nbsp;(inches)</div>
+      <div id="hint_gl_delta" class="hint-box" style="display:none;">
+        💡 <strong>Hint:</strong> Δ<sub>max</sub> = L(ft) × 12 / 360 &nbsp;(inches)
+      </div>
       <div class="input-card">
         <label>Δ<sub>max</sub> (in)</label>
         <small>= L×12 / 360</small>
@@ -474,9 +476,9 @@
     <!-- STEP 2: I_req -->
     <div id="gl_IreqBlock" class="calc-block">
       <h3 style="margin-top:0;">Step 2: Required Moment of Inertia I<sub>req</sub></h3>
-      <div class="hint-box">
-        I<sub>req</sub> = 5wL⁴ / (384 · E · Δ<sub>max</sub>) &nbsp;·&nbsp; Use E = 1.8 × 10⁶ psi (Douglas Fir)<br>
-        Convert: w in lbs/in (÷12), L in inches (×12), multiply result by 1728 when L in ft.
+      <div id="hint_gl_Ireq" class="hint-box" style="display:none;">
+        💡 <strong>Hint:</strong> I<sub>req</sub> = 5wL⁴ / (384 · E · Δ<sub>max</sub>) &nbsp;·&nbsp; Use E = 1.8 × 10⁶ psi (Douglas Fir)<br>
+        Convert: w in lbs/in (÷12), L in inches (×12).
       </div>
       <div class="input-card" style="width:200px;">
         <label>I<sub>req</sub> (in⁴)</label>
@@ -871,6 +873,8 @@
       $('bu_show_n1').textContent = n1;
       $('bu_shearBlock').style.display='block';
       $('bu_shearBlock').scrollIntoView({behavior:'smooth'});
+    } else {
+      $('hint_bending').style.display='block';
     }
   }
 
@@ -900,6 +904,8 @@
       $('bu_show_n2').textContent = n2;
       $('bu_deflBlock').style.display='block';
       $('bu_deflBlock').scrollIntoView({behavior:'smooth'});
+    } else {
+      $('hint_shear').style.display='block';
     }
   }
 
@@ -932,6 +938,8 @@
       $('bu_show_n3').textContent = n3;
       $('bu_finalBlock').style.display='block';
       $('bu_finalBlock').scrollIntoView({behavior:'smooth'});
+    } else {
+      $('hint_defl').style.display='block';
     }
   }
 
@@ -994,6 +1002,7 @@
     } else {
       deduct(5);
       showFB('gl_deltaFeedback', false, `❌ Δ<sub>max</sub> should be ${exp.toFixed(3)}" = L×12/360 (−5 pts)`);
+      $('hint_gl_delta').style.display='block';
     }
   }
 
@@ -1012,6 +1021,7 @@
     } else {
       deduct(10);
       showFB('gl_IreqFeedback', false, `❌ I<sub>req</sub> should be ~${exp.toFixed(1)} in⁴ (−10 pts). Use E=1.8×10⁶ psi, L in inches.`);
+      $('hint_gl_Ireq').style.display='block';
     }
   }
 
