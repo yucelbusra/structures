@@ -4,258 +4,1219 @@
   <meta charset="UTF-8" />
   <title>Structural Engineer Roleplay</title>
   <style>
-    /* --- CSS STYLES --- */
     body { margin: 0; font-family: sans-serif; background-color: #cce7f6; }
-    
-    /* Layout */
+
     .screen { display: none; min-height: 100vh; width: 100vw; flex-direction: column; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
     .active { display: flex; }
-    
-    /* Progress Bar */
-    #progressBar { display: flex; gap: 20px; margin: 20px 0 40px 0; justify-content: center; flex-wrap: wrap; }
-    .step { padding: 8px 12px; border-radius: 8px; background: #ccc; font-weight: bold; color: #fff; font-size: 0.9em; }
+
+    #progressBar { display: flex; gap: 12px; margin: 20px 0 30px 0; justify-content: center; flex-wrap: wrap; }
+    .step { padding: 8px 12px; border-radius: 8px; background: #ccc; font-weight: bold; color: #fff; font-size: 0.85em; }
     .step.active { background: #0077cc; }
     .step.completed { background: #2ecc71; }
 
-    /* Inputs & Buttons */
     input, select { padding: 8px; margin: 5px 0 15px 0; width: 180px; border: 1px solid #ccc; border-radius: 4px; }
-    button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background-color: #0077cc; color: #fff; cursor: pointer; margin-top: 10px; }
+    button { padding: 10px 20px; font-size: 15px; border: none; border-radius: 8px; background-color: #0077cc; color: #fff; cursor: pointer; margin-top: 10px; }
     button:hover { background-color: #005fa3; }
     button:disabled { background-color: #999; cursor: not-allowed; }
 
-    /* Canvas & Images */
     canvas { border: 1px solid #888; margin-top: 20px; background: white; max-width: 100%; }
     img.load-icon { height: 30px; display: none; vertical-align: middle; }
 
-    /* --- BADGE FIX --- */
-    #badgeBar { 
-        display: flex; 
-        gap: 15px; 
-        justify-content: center; 
-        margin-bottom: 20px; 
-        min-height: 60px; 
-        flex-wrap: wrap; 
-    }
-    
-    .badge-wrapper {
-        position: relative;
-        width: 60px;  /* FIXED WIDTH */
-        height: 60px; /* FIXED HEIGHT */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .badge {
-        width: 60px !important;  /* Force small size */
-        height: 60px !important; /* Force small size */
-        border-radius: 10px;
-        border: 2px solid #ddd;
-        background: #fff;
-        object-fit: contain;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
+    #badgeBar { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; min-height: 60px; flex-wrap: wrap; }
+    .badge-wrapper { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+    .badge { width: 60px !important; height: 60px !important; border-radius: 10px; border: 2px solid #ddd; background: #fff; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .badge.locked { filter: grayscale(100%) opacity(0.5); }
-    
-    .lock-icon {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 24px;
-        height: 24px;
-        opacity: 0.7;
-        pointer-events: none;
-    }
+    .lock-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; opacity: 0.7; pointer-events: none; }
 
-    /* Calculation Cards */
-    .input-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; vertical-align: top; margin: 10px; width: 220px; text-align: left; }
+    .input-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; vertical-align: top; margin: 10px; width: 200px; text-align: left; }
     .input-card label { font-weight: bold; display: block; margin-bottom: 5px; }
     .input-card small { color: #666; font-size: 0.85em; display:block; margin-bottom:5px; }
-    
-    /* Sequential Steps */
-    .calc-block { margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; border: 1px solid #ddd; display: none; width: 100%; max-width: 600px; }
 
-    /* Feedback Box */
+    .calc-block { margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 8px; border: 1px solid #ddd; display: none; width: 100%; max-width: 660px; text-align: left; }
     .feedback-box { margin-top: 10px; padding: 10px; border-radius: 5px; display: none; text-align: left; }
-    
-    /* Notification */
-    #badgeNotification { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; background-color: rgba(0, 119, 204, 0.95); color: white; border-radius: 10px; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 1.5em; font-weight: bold; text-align: center; }
-    @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; display: none; } }
+
+    /* Score display */
+    #scoreDisplay { position: fixed; top: 12px; right: 20px; background: #0077cc; color: white; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 1em; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+    /* Section choice cards */
+    .choice-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+    .choice-card { background: white; border: 3px solid #ddd; border-radius: 12px; padding: 18px 24px; cursor: pointer; transition: all 0.2s; min-width: 140px; }
+    .choice-card:hover { border-color: #0077cc; box-shadow: 0 4px 12px rgba(0,119,204,0.2); }
+    .choice-card.selected { border-color: #0077cc; background: #e8f4fd; }
+    .choice-card h3 { margin: 0 0 6px 0; color: #0077cc; }
+    .choice-card p { margin: 0; font-size: 0.82em; color: #555; }
+
+    /* result table */
+    .result-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+    .result-table th { background: #0077cc; color: white; padding: 8px; }
+    .result-table td { padding: 8px; border-bottom: 1px solid #ddd; text-align: center; }
+    .result-table tr:last-child td { font-weight: bold; background: #e8f4fd; }
+
+    /* hint box */
+    .hint-box { background: #fff8e1; border-left: 4px solid #f9a825; padding: 10px 14px; border-radius: 4px; font-size: 0.85em; color: #5d4037; margin: 10px 0; }
+
+    /* glulam section box */
+    .section-option { background: white; border: 2px solid #ddd; border-radius: 8px; padding: 10px 16px; cursor: pointer; margin: 6px; display: inline-block; font-size: 0.9em; transition: all 0.2s; }
+    .section-option:hover { border-color: #0077cc; }
+    .section-option.selected { border-color: #2ecc71; background: #eafaf1; font-weight: bold; }
+
+    #badgeNotification { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; background-color: rgba(0,119,204,0.95); color: white; border-radius: 10px; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 1.5em; font-weight: bold; text-align: center; }
+    @keyframes fadeInOut { 0%{opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{opacity:0;} }
+
+    .tag-green { background:#2ecc71; color:white; padding:2px 8px; border-radius:10px; font-size:0.75em; }
+    .tag-red   { background:#e74c3c; color:white; padding:2px 8px; border-radius:10px; font-size:0.75em; }
+    .tag-blue  { background:#0077cc; color:white; padding:2px 8px; border-radius:10px; font-size:0.75em; }
   </style>
 </head>
 <body>
-  
-  <div id="progressBar">
-    <div class="step" id="step1">🔹 Intro</div>
-    <div class="step" id="step2">📏 Slab</div>
-    <div class="step" id="step3">📊 Loads</div>
-    <div class="step" id="step4">⚖️ Design</div>
-    <div class="step" id="step5">🎓 Summary</div>
+
+<div id="scoreDisplay">⭐ Score: <span id="scoreLive">100</span></div>
+
+<div id="progressBar">
+  <div class="step" id="step1">🔹 Intro</div>
+  <div class="step" id="step2">📏 Slab</div>
+  <div class="step" id="step3">📊 Loads</div>
+  <div class="step" id="step4">⚖️ Forces</div>
+  <div class="step" id="step5">🪵 Beam Type</div>
+  <div class="step" id="step6">🔩 Design</div>
+  <div class="step" id="step7">🎓 Summary</div>
+</div>
+
+<div id="badgeBar"></div>
+
+<!-- ══════════════════════════════════════════ INTRO -->
+<div id="introScreen" class="screen active">
+  <h1>🧑‍🔧 Welcome, Construction Managers!</h1>
+  <img src="./img/welcome.gif" alt="Welcome" style="max-width:300px; margin:15px;" onerror="this.style.display='none'">
+  <p>Your task is to design timber beams for a sustainable building project.<br>
+     Start by entering your slab design parameters.</p>
+  <p style="font-size:0.85em; opacity:0.85; margin-top:12px;">
+    <strong>Disclaimer:</strong> Educational research prototype — Auburn University.
+  </p>
+  <button id="continueBtn">I'm Ready! →</button>
+</div>
+
+<!-- ══════════════════════════════════════════ SLAB -->
+<div id="canvasScreen" class="screen">
+  <div style="display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+    <div style="text-align:left;">
+      <h2>Slab Design Parameters</h2>
+      <label>Width of Slab W (ft):</label><br>
+      <input type="number" id="inputWidth" step="0.1"><br>
+      <label>Length of Slab L (ft):</label><br>
+      <input type="number" id="inputLength" step="0.1"><br>
+      <label>Number of Beams:</label><br>
+      <input type="number" id="inputBeamCount" step="1" min="2"><br>
+      <p id="spacingInfo" style="margin-top:10px; font-weight:bold; color:#0077cc;"></p>
+      <button id="drawCanvasBtn">Visualize Design</button><br>
+      <button id="backBtn" style="background:#777; margin-top:8px;">← Back</button>
+    </div>
+    <div>
+      <img src="./img/SlabDimensions.png" alt="Slab" style="max-width:250px; display:block; margin-bottom:10px;" onerror="this.style.display='none'">
+      <canvas id="slabCanvas" width="400" height="400"></canvas>
+    </div>
   </div>
+  <button id="continueToLoadBtn" style="margin-top:20px;">Continue →</button>
+</div>
 
-  <div id="badgeBar"></div>
-
-  <div id="introScreen" class="screen active">
-    <h1>🧑‍🔧 Welcome, Construction Managers!</h1>
-    <img src="./img/welcome.gif" alt="Welcome" style="max-width:300px; margin:15px;">
-    <p>
-      Your task is to design timber beams for a sustainable building project.<br>
-      Start by entering your slab design parameters.
-    </p>
-    <p style="font-size: 0.85em; opacity: 0.85; margin-top: 12px;">
-      <strong>Disclaimer:</strong> This tool is an educational research prototype, developed by Busra Yucel, Auburn University.
-    </p>
-    <button id="continueBtn">I'm Ready! →</button>
-  </div>
-
-  <div id="canvasScreen" class="screen">
-    <div style="display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
-      <div style="text-align:left;">
-        <h2>Slab Design Parameters</h2>
-        <label>Width of Slab (W) (ft):</label><br>
-        <input type="number" id="inputWidth" step="0.1"><br>
-        <label>Length of Slab (L) (ft):</label><br>
-        <input type="number" id="inputLength" step="0.1"><br>
-        <label>Number of Beams:</label><br>
-        <input type="number" id="inputBeamCount" step="1" min="2"><br>
-        <p id="spacingInfo" style="margin-top:10px; font-weight:bold; color:#0077cc;"></p>
-        <button id="drawCanvasBtn">Visualize Design</button>
-        <br>
-        <button id="backBtn" style="background:#777;">← Back</button>
-      </div>
-      <div>
-        <img src="./img/SlabDimensions.png" alt="Slab illustration" style="max-width:250px; display:block; margin-bottom:10px;">
-        <canvas id="slabCanvas" width="400" height="400"></canvas>
+<!-- ══════════════════════════════════════════ LOADS -->
+<div id="loadScreen" class="screen">
+  <div style="display:flex; gap:30px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+    <div style="text-align:left;">
+      <h2>Load Parameters (psi)</h2>
+      <label>Permanent (Dead) Load:</label><br>
+      <input type="number" id="permanentLoad" step="0.1">
+      <img id="imgPermanent" src="./img/load-permanent.png" class="load-icon"><br>
+      <label>Snow Load:</label><br>
+      <input type="number" id="snowLoad" step="0.1">
+      <img id="imgSnow" src="./img/load-snow.png" class="load-icon"><br>
+      <label>Wind Load:</label><br>
+      <input type="number" id="windLoad" step="0.1">
+      <img id="imgWindPositive" src="./img/load-wind.png" class="load-icon">
+      <img id="imgWindNegative" src="./img/load-wind-negative.png" class="load-icon"><br>
+      <label>Mobile (Live) Load:</label><br>
+      <input type="number" id="mobileLoad" step="0.1">
+      <img id="imgMobile" src="./img/load-mobile.png" class="load-icon"><br>
+      <button id="backToSlabBtn" style="background:#777;">← Back</button>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <canvas id="loadCanvas" width="400" height="400"></canvas>
+      <div id="combinedLoadImage" style="display:none; text-align:center; margin:10px 0;"></div>
+      <button id="toggleCombinedBtn" style="display:none; margin:10px; font-size:14px;">Show Combined Loads</button>
+      <div style="margin-top:15px; padding:15px; border:2px dashed #0077cc; border-radius:10px; background:white; width:280px;">
+        <h3 style="margin:0 0 10px 0; font-size:1.1em;">Total Design Load</h3>
+        <small>Loads applied on slab (psi)</small><br>
+        <input type="number" id="inputTotalLoad" step="0.1" style="width:100px;">
+        <button id="checkTotalLoadBtn" style="margin-top:0; padding:8px 15px; font-size:14px;">Check</button>
+        <div id="loadFeedback" class="feedback-box"></div>
+        <button type="button" id="continueToTributaryBtn" style="display:none; width:100%; margin-top:10px; background-color:#2ecc71;">Continue →</button>
       </div>
     </div>
-    <button id="continueToLoadBtn" style="margin-top:20px;">Continue →</button>
   </div>
+</div>
 
-  <div id="loadScreen" class="screen">
-    <div style="display:flex; gap:30px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
-      <div style="text-align:left;">
-        <h2>Load Parameters (psi)</h2>
-        
-        <label>Permanent (Dead) Load:</label><br>
-        <input type="number" id="permanentLoad" step="0.1">
-        <img id="imgPermanent" src="./img/load-permanent.png" class="load-icon"><br>
+<!-- ══════════════════════════════════════════ TRIBUTARY / FORCES -->
+<div id="tributaryScreen" class="screen">
+  <h2>Design Calculation Phase</h2>
+  <div style="display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+    <div style="text-align:center;">
+      <canvas id="loadCanvasPreview" width="300" height="300"></canvas>
+      <div id="combinedImagePreview" style="margin-top:10px;"></div>
+    </div>
+    <div style="text-align:left; min-width:300px; max-width:660px;">
 
-        <label>Snow Load:</label><br>
-        <input type="number" id="snowLoad" step="0.1">
-        <img id="imgSnow" src="./img/load-snow.png" class="load-icon"><br>
-
-        <label>Wind Load:</label><br>
-        <input type="number" id="windLoad" step="0.1">
-        <img id="imgWindPositive" src="./img/load-wind.png" class="load-icon">
-        <img id="imgWindNegative" src="./img/load-wind-negative.png" class="load-icon"><br>
-
-        <label>Mobile (Live) Load:</label><br>
-        <input type="number" id="mobileLoad" step="0.1">
-        <img id="imgMobile" src="./img/load-mobile.png" class="load-icon"><br>
-        
-        <button id="backToSlabBtn" style="background:#777;">← Back</button>
+      <!-- Step 1: Tributary -->
+      <div id="step1_trib" style="background:white; padding:15px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0;">Step 1: Tributary Width</h3>
+        <label>Choose Beam:</label><br>
+        <select id="beamSelect"></select><br>
+        <label>Enter Tributary Width (ft):</label><br>
+        <input type="number" id="tributaryWidth" step="0.1"><br>
+        <button id="submitTribBtn">Check Width</button>
+        <div id="tribFeedback" class="feedback-box"></div>
+        <img id="feedbackGif" style="display:none; max-width:150px; margin-top:10px;" onerror="this.style.display='none'">
       </div>
 
-      <div style="display:flex; flex-direction:column; align-items:center;">
-          <canvas id="loadCanvas" width="400" height="400"></canvas>
-          <div id="combinedLoadImage" style="display:none; text-align:center; margin:10px 0;"></div>
-          <button id="toggleCombinedBtn" style="display:none; margin:10px; font-size:14px;">Show Combined Loads</button>
-          
-          <div style="margin-top:15px; padding:15px; border:2px dashed #0077cc; border-radius:10px; background:white; width:280px;">
-            <h3 style="margin:0 0 10px 0; font-size:1.1em;">Total Design Load</h3>
-            <small>Loads applied on slab (psi)</small><br>
-            <input type="number" id="inputTotalLoad" step="0.1" style="width:100px;">
-            <button id="checkTotalLoadBtn" style="margin-top:0; padding:8px 15px; font-size:14px;">Check</button>
-            <div id="loadFeedback" class="feedback-box"></div>
-            <button type="button" id="continueToTributaryBtn" style="display:none; width:100%; margin-top:10px; background-color:#2ecc71;">Continue →</button>
+      <!-- Step 2: Line Load -->
+      <div id="step2_lineLoad" class="calc-block">
+        <h3 style="margin-top:0;">Step 2: Line Load on Beam (w)</h3>
+        <label>Line Load w (lbs/ft):</label><br>
+        <input type="number" id="inputLineLoad" step="0.1"><br>
+        <button id="checkLineLoadBtn">Check Line Load</button>
+        <div id="lineLoadFeedback" class="feedback-box"></div>
+      </div>
+
+      <!-- Step 3: Forces -->
+      <div id="step3_forces" class="calc-block">
+        <h3 style="margin-top:0;">Step 3: Forces &amp; Deflection</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <div class="input-card">
+            <label>Max Shear V<sub>max</sub></label>
+            <small>Unit: lbs</small>
+            <input type="number" id="inputVmax" step="0.1" style="width:160px;">
           </div>
+          <div class="input-card">
+            <label>Max Moment M<sub>max</sub></label>
+            <small>Unit: lbs-ft</small>
+            <input type="number" id="inputMmax" step="0.1" style="width:160px;">
+          </div>
+          <div class="input-card">
+            <label>Deflection Δ<sub>max</sub></label>
+            <small>Unit: inches</small>
+            <input type="number" id="inputDelta" step="0.001" style="width:160px;">
+          </div>
+        </div>
+        <button id="checkForcesBtn" style="width:100%; margin-top:15px; background:#27ae60;">Verify Forces</button>
+        <div id="forcesFeedback" class="feedback-box"></div>
       </div>
+
+      <button id="continueToBeamTypeBtn" style="margin-top:20px; display:none; width:100%; background:#8e44ad;">Continue to Beam Design →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ BEAM TYPE SELECTION -->
+<div id="beamTypeScreen" class="screen">
+  <h2>🪵 Step 4: Choose Your Beam Type</h2>
+  <p style="max-width:560px; margin: 0 auto 20px;">Based on your calculated forces, decide which beam type is appropriate.<br>
+  Remember: use Glu-Lam when n &gt; 10, W/D &gt; 0.5, or loads are very heavy.</p>
+
+  <div style="background:white; border-radius:12px; padding:20px; max-width:600px; margin: 0 auto; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+    <h3 style="color:#555;">Your Calculated Values</h3>
+    <table class="result-table">
+      <tr><th>Property</th><th>Value</th></tr>
+      <tr><td>V<sub>max</sub></td><td id="summary_Vmax">—</td></tr>
+      <tr><td>M<sub>max</sub></td><td id="summary_Mmax">—</td></tr>
+      <tr><td>Line Load w</td><td id="summary_w">—</td></tr>
+      <tr><td>Span L</td><td id="summary_L">—</td></tr>
+    </table>
+  </div>
+
+  <h3 style="margin-top:30px;">Which beam type will you use?</h3>
+  <div class="choice-cards">
+    <div class="choice-card" id="choiceBuiltUp" onclick="selectBeamType('builtup')">
+      <h3>🪵 Built-Up Beam</h3>
+      <p>Multiple 2× boards nailed together.<br>Use when n ≤ 10 and W/D ≤ 0.5</p>
+    </div>
+    <div class="choice-card" id="choiceGluLam" onclick="selectBeamType('glulam')">
+      <h3>🏗️ Glu-Lam Beam</h3>
+      <p>Engineered glued laminated timber.<br>Use for heavy loads or large spans.</p>
     </div>
   </div>
 
-  <div id="tributaryScreen" class="screen">
-    <h2>Design Calculation Phase</h2>
+  <div id="beamTypeHint" class="hint-box" style="max-width:500px; margin:10px auto; display:none;"></div>
+  <button id="confirmBeamTypeBtn" style="display:none; background:#8e44ad; margin-top:10px;">Confirm Choice →</button>
+</div>
 
-    <div style="display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
-      <div style="text-align:center;">
-        <canvas id="loadCanvasPreview" width="300" height="300"></canvas>
-        <div id="combinedImagePreview" style="margin-top:10px;"></div>
-      </div>
+<!-- ══════════════════════════════════════════ BUILT-UP DESIGN -->
+<div id="builtupScreen" class="screen">
+  <h2>🪵 Built-Up Beam Design</h2>
+  <p style="max-width:600px;">Design the beam step-by-step. Each check gives you the required number of boards — the final answer is the maximum of all three.</p>
 
-      <div style="text-align:left; min-width:300px; max-width:600px;">
-        
-        <div id="step1_trib" style="background:white; padding:15px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-            <h3 style="margin-top:0;">Step 1: Tributary Width</h3>
-            <label>Choose Beam:</label><br>
-            <select id="beamSelect"></select><br>
-            <label>Enter Tributary Width (ft):</label><br>
-            <input type="number" id="tributaryWidth" step="0.1"><br>
-            <button id="submitTribBtn">Check Width</button>
-            <div id="tribFeedback" class="feedback-box"></div>
-            <img id="feedbackGif" style="display:none; max-width:150px; margin-top:10px;">
+  <div style="max-width:700px; width:100%; text-align:left;">
+
+    <!-- Reference values banner -->
+    <div style="background:white; border-radius:8px; padding:14px 20px; margin-bottom:16px; border-left:5px solid #0077cc;">
+      <strong>Given Values:</strong>&nbsp;
+      V<sub>max</sub> = <span id="bu_Vmax" style="color:#0077cc; font-weight:bold;"></span> lbs &nbsp;|&nbsp;
+      M<sub>max</sub> = <span id="bu_Mmax" style="color:#0077cc; font-weight:bold;"></span> lbs-ft &nbsp;|&nbsp;
+      w = <span id="bu_w" style="color:#0077cc; font-weight:bold;"></span> lbs/ft &nbsp;|&nbsp;
+      L = <span id="bu_L" style="color:#0077cc; font-weight:bold;"></span> ft
+    </div>
+
+    <!-- Section choice -->
+    <div style="background:white; border-radius:8px; padding:16px 20px; margin-bottom:16px; box-shadow:0 2px 5px rgba(0,0,0,0.08);">
+      <h3 style="margin-top:0;">Select Section Type</h3>
+      <div class="choice-cards" style="justify-content:flex-start;">
+        <div class="choice-card" id="sec2x10" onclick="selectSection('2x10')">
+          <h3>2 × 10</h3>
+          <p>S<sub>x</sub>=21.4 in³<br>A<sub>x</sub>=13.9 in²<br>I<sub>x</sub>=98.9 in⁴</p>
         </div>
-
-        <div id="step2_lineLoad" class="calc-block">
-            <h3 style="margin-top:0;">Step 2: Line load on the beam (w)</h3>
-            <label>Line Load (w) (lbs/ft):</label><br>
-            <input type="number" id="inputLineLoad" step="0.1"><br>
-            <button id="checkLineLoadBtn">Check Line Load</button>
-            <div id="lineLoadFeedback" class="feedback-box"></div>
+        <div class="choice-card" id="sec2x12" onclick="selectSection('2x12')">
+          <h3>2 × 12</h3>
+          <p>S<sub>x</sub>=31.6 in³<br>A<sub>x</sub>=16.9 in²<br>I<sub>x</sub>=178 in⁴</p>
         </div>
-
-        <div id="step3_forces" class="calc-block">
-            <h3 style="margin-top:0;">Step 3: Forces & Deflection</h3>
-
-            <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                <div class="input-card">
-                    <label>Max Shear (V_max)</label>
-                    <small>Unit: lbs </small>
-                    <input type="number" id="inputVmax" step="0.1" style="width:180px;">
-                </div>
-
-                <div class="input-card">
-                    <label>Max Moment (M_max)</label>
-                    <small>Unit: lbs-ft (</small>
-                    <input type="number" id="inputMmax" step="0.1" style="width:180px;">
-                </div>
-                
-                <div class="input-card">
-                    <label>Deflection (\delta_{max})</label>
-                    <small>Unit: inches</small>
-                    <input type="number" id="inputDelta" step="0.001" style="width:180px;">
-                </div>
-            </div>
-
-            <button id="checkForcesBtn" style="width:100%; margin-top:15px; background:#27ae60;">Verify Design</button>
-            <div id="forcesFeedback" class="feedback-box"></div>
-        </div>
-
-        <button id="continueToSummaryBtn" style="margin-top:20px; display:none; width:100%;">Finish → Summary</button>
-
       </div>
     </div>
+
+    <!-- CA input -->
+    <div id="bu_caBlock" class="calc-block" style="display:none;">
+      <h3 style="margin-top:0;">Adjustment Factors</h3>
+      <div class="hint-box">F<sub>b</sub> and F<sub>v</sub> come from Table 1 for your selected species &amp; grade. C<sub>A</sub> is the cumulative adjustment factor (0.80–1.00). If not given, assume 0.80.</div>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;">
+        <div class="input-card">
+          <label>F<sub>b</sub> (psi)</label>
+          <small>From Table 1</small>
+          <input type="number" id="bu_Fb" step="1" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>F<sub>v</sub> (psi)</label>
+          <small>From Table 1</small>
+          <input type="number" id="bu_Fv" step="1" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>C<sub>A</sub></label>
+          <small>0.80 – 1.00</small>
+          <input type="number" id="bu_CA" step="0.01" min="0.8" max="1.0" placeholder="e.g. 0.80" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>E (psi)</label>
+          <small>Modulus of Elasticity</small>
+          <input type="number" id="bu_E" step="1000" placeholder="e.g. 1800000" style="width:140px;">
+        </div>
+      </div>
+      <button id="bu_confirmParams" style="margin-top:10px; background:#8e44ad;">Confirm Parameters →</button>
+    </div>
+
+    <!-- BENDING CHECK -->
+    <div id="bu_bendingBlock" class="calc-block">
+      <h3 style="margin-top:0;">✏️ Check 1: Bending → n₁</h3>
+      <div class="hint-box">
+        F<sub>b</sub>' = F<sub>b</sub> × C<sub>A</sub> &nbsp;|&nbsp;
+        S<sub>req</sub> = M<sub>max</sub>(in·lbs) / F<sub>b</sub>' &nbsp;|&nbsp;
+        n₁ = S<sub>req</sub> / S<sub>x</sub> → round up
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+        <div class="input-card">
+          <label>F<sub>b</sub>' (psi)</label>
+          <small>= F<sub>b</sub> × C<sub>A</sub></small>
+          <input type="number" id="bu_Fb_prime" step="1" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>S<sub>req</sub> (in³)</label>
+          <small>= M<sub>max</sub>×12 / F<sub>b</sub>'</small>
+          <input type="number" id="bu_Sreq" step="0.01" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>n₁</label>
+          <small>= S<sub>req</sub> / S<sub>x</sub>, round up</small>
+          <input type="number" id="bu_n1" step="1" min="1" style="width:140px;">
+        </div>
+      </div>
+      <button id="bu_checkBending" style="margin-top:10px; background:#2980b9;">Check Bending ✓</button>
+      <div id="bu_bendingFeedback" class="feedback-box"></div>
+    </div>
+
+    <!-- SHEAR CHECK -->
+    <div id="bu_shearBlock" class="calc-block">
+      <h3 style="margin-top:0;">✏️ Check 2: Shear → n₂</h3>
+      <div class="hint-box">
+        F<sub>v</sub>' = F<sub>v</sub> × C<sub>A</sub> &nbsp;|&nbsp;
+        A<sub>req</sub> = 1.5 × V<sub>max</sub> / F<sub>v</sub>' &nbsp;|&nbsp;
+        n₂ = A<sub>req</sub> / A<sub>x</sub> → round up
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+        <div class="input-card">
+          <label>F<sub>v</sub>' (psi)</label>
+          <small>= F<sub>v</sub> × C<sub>A</sub></small>
+          <input type="number" id="bu_Fv_prime" step="1" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>A<sub>req</sub> (in²)</label>
+          <small>= 1.5 × V<sub>max</sub> / F<sub>v</sub>'</small>
+          <input type="number" id="bu_Areq" step="0.01" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>n₂</label>
+          <small>= A<sub>req</sub> / A<sub>x</sub>, round up</small>
+          <input type="number" id="bu_n2" step="1" min="1" style="width:140px;">
+        </div>
+      </div>
+      <button id="bu_checkShear" style="margin-top:10px; background:#2980b9;">Check Shear ✓</button>
+      <div id="bu_shearFeedback" class="feedback-box"></div>
+    </div>
+
+    <!-- DEFLECTION CHECK -->
+    <div id="bu_deflBlock" class="calc-block">
+      <h3 style="margin-top:0;">✏️ Check 3: Deflection → n₃</h3>
+      <div class="hint-box">
+        Δ<sub>max</sub> = L/360 (in) &nbsp;|&nbsp;
+        I<sub>req</sub> = 5wL⁴ / (384·E·Δ<sub>max</sub>) &nbsp;|&nbsp;
+        n₃ = I<sub>req</sub> / I<sub>x</sub> → round up
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+        <div class="input-card">
+          <label>Δ<sub>max</sub> (in)</label>
+          <small>= L(ft)×12 / 360</small>
+          <input type="number" id="bu_delta" step="0.001" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>I<sub>req</sub> (in⁴)</label>
+          <small>= 5wL⁴ / (384EΔ)</small>
+          <input type="number" id="bu_Ireq" step="0.01" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>n₃</label>
+          <small>= I<sub>req</sub> / I<sub>x</sub>, round up</small>
+          <input type="number" id="bu_n3" step="1" min="1" style="width:140px;">
+        </div>
+      </div>
+      <button id="bu_checkDefl" style="margin-top:10px; background:#2980b9;">Check Deflection ✓</button>
+      <div id="bu_deflFeedback" class="feedback-box"></div>
+    </div>
+
+    <!-- FINAL n -->
+    <div id="bu_finalBlock" class="calc-block">
+      <h3 style="margin-top:0;">🏁 Final Design: Choose n</h3>
+      <div class="hint-box">n = max(n₁, n₂, n₃). Also check W/D ≤ 0.5 where W = n × 1.5"</div>
+      <table class="result-table" id="bu_summaryTable">
+        <tr><th>Check</th><th>Boards Required</th></tr>
+        <tr><td>Bending (n₁)</td><td id="bu_show_n1">—</td></tr>
+        <tr><td>Shear (n₂)</td><td id="bu_show_n2">—</td></tr>
+        <tr><td>Deflection (n₃)</td><td id="bu_show_n3">—</td></tr>
+        <tr><td>Final n</td><td id="bu_show_nfinal">—</td></tr>
+      </table>
+      <div style="margin-top:14px;">
+        <label><strong>Enter your final n:</strong></label><br>
+        <input type="number" id="bu_nFinal" step="1" min="1" style="width:100px;">
+        <button id="bu_checkFinal" style="background:#27ae60;">Submit Final Design</button>
+      </div>
+      <div id="bu_finalFeedback" class="feedback-box"></div>
+      <!-- W/D check -->
+      <div id="bu_wdBlock" class="calc-block" style="display:none; background:#f0fff4; border-color:#2ecc71;">
+        <h3 style="margin-top:0; color:#27ae60;">✅ W/D Geometry Check</h3>
+        <p style="font-size:0.88em;">Total Width W = n × 1.5" &nbsp;|&nbsp; Depth D = actual section depth</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <div class="input-card">
+            <label>W (in)</label>
+            <small>= n × 1.5</small>
+            <input type="number" id="bu_W" step="0.1" style="width:120px;">
+          </div>
+          <div class="input-card">
+            <label>D (in)</label>
+            <small>Actual depth (e.g. 9.25 or 11.25)</small>
+            <input type="number" id="bu_D" step="0.01" style="width:120px;">
+          </div>
+          <div class="input-card">
+            <label>W/D ratio</label>
+            <small>Must be ≤ 0.5</small>
+            <input type="number" id="bu_WD" step="0.001" style="width:120px;">
+          </div>
+        </div>
+        <button id="bu_checkWD" style="margin-top:10px; background:#27ae60;">Check W/D ✓</button>
+        <div id="bu_wdFeedback" class="feedback-box"></div>
+      </div>
+    </div>
+
+    <button id="bu_toSummary" style="display:none; margin-top:20px; width:100%; background:#2ecc71; font-size:1.1em;">🎓 View Final Summary →</button>
   </div>
+</div>
 
-  <div id="resultScreen" class="screen">
-    <h2>🏁 Final Score</h2>
-    <div id="finalScore" style="background:white; padding:30px; border-radius:10px; text-align:left;"></div>
-    <button onclick="location.reload()" style="margin-top:20px;">Start Over</button>
+<!-- ══════════════════════════════════════════ GLU-LAM DESIGN -->
+<div id="glulamScreen" class="screen">
+  <h2>🏗️ Glu-Lam Beam Design</h2>
+  <p style="max-width:600px;">Design a Glu-Lam beam by computing I<sub>req</sub>, then selecting a standard section and verifying all three capacity checks.</p>
+
+  <div style="max-width:700px; width:100%; text-align:left;">
+
+    <!-- Reference banner -->
+    <div style="background:white; border-radius:8px; padding:14px 20px; margin-bottom:16px; border-left:5px solid #8e44ad;">
+      <strong>Given Values:</strong>&nbsp;
+      V<sub>max</sub> = <span id="gl_Vmax" style="color:#8e44ad; font-weight:bold;"></span> lbs &nbsp;|&nbsp;
+      M<sub>max</sub> = <span id="gl_Mmax" style="color:#8e44ad; font-weight:bold;"></span> lbs-ft &nbsp;|&nbsp;
+      w = <span id="gl_w" style="color:#8e44ad; font-weight:bold;"></span> lbs/ft &nbsp;|&nbsp;
+      L = <span id="gl_L" style="color:#8e44ad; font-weight:bold;"></span> ft
+    </div>
+
+    <!-- STEP 1: Compute Mmax Vmax Δmax -->
+    <div style="background:white; border-radius:8px; padding:16px 20px; margin-bottom:16px; box-shadow:0 2px 5px rgba(0,0,0,0.08);">
+      <h3 style="margin-top:0;">Step 1: Allowable Deflection</h3>
+      <div class="hint-box">Δ<sub>max</sub> = L(ft) × 12 / 360 &nbsp;(inches)</div>
+      <div class="input-card">
+        <label>Δ<sub>max</sub> (in)</label>
+        <small>= L×12 / 360</small>
+        <input type="number" id="gl_delta" step="0.001" style="width:140px;">
+      </div>
+      <button id="gl_checkDelta" style="margin-top:10px; background:#8e44ad;">Check Δ<sub>max</sub> ✓</button>
+      <div id="gl_deltaFeedback" class="feedback-box"></div>
+    </div>
+
+    <!-- STEP 2: I_req -->
+    <div id="gl_IreqBlock" class="calc-block">
+      <h3 style="margin-top:0;">Step 2: Required Moment of Inertia I<sub>req</sub></h3>
+      <div class="hint-box">
+        I<sub>req</sub> = 5wL⁴ / (384 · E · Δ<sub>max</sub>) &nbsp;·&nbsp; Use E = 1.8 × 10⁶ psi (Douglas Fir)<br>
+        Convert: w in lbs/in (÷12), L in inches (×12), multiply result by 1728 when L in ft.
+      </div>
+      <div class="input-card" style="width:200px;">
+        <label>I<sub>req</sub> (in⁴)</label>
+        <small>5wL⁴ / (384·E·Δ<sub>max</sub>)</small>
+        <input type="number" id="gl_Ireq" step="0.1" style="width:160px;">
+      </div>
+      <button id="gl_checkIreq" style="margin-top:10px; background:#8e44ad;">Check I<sub>req</sub> ✓</button>
+      <div id="gl_IreqFeedback" class="feedback-box"></div>
+    </div>
+
+    <!-- STEP 3: Select section -->
+    <div id="gl_sectionBlock" class="calc-block">
+      <h3 style="margin-top:0;">Step 3: Select Glu-Lam Section</h3>
+      <p style="font-size:0.85em; color:#555;">Choose a standard section from the Douglas Fir Glu-Lam table with I<sub>x</sub> ≥ I<sub>req</sub>. Enter the values from the table.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+        <div class="input-card">
+          <label>Width b (in)</label>
+          <small>e.g. 3.125, 5.125, 6.75</small>
+          <input type="number" id="gl_b" step="0.001" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>Depth d (in)</label>
+          <small>e.g. 9, 10.5, 12, 13.5...</small>
+          <input type="number" id="gl_d" step="0.5" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>I<sub>x</sub> (in⁴)</label>
+          <small>From Douglas Fir table</small>
+          <input type="number" id="gl_Ix" step="0.1" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>Moment Capacity (lbs-ft)</label>
+          <small>From Douglas Fir table</small>
+          <input type="number" id="gl_Mcap" step="1" style="width:140px;">
+        </div>
+        <div class="input-card">
+          <label>Shear Capacity (lbs)</label>
+          <small>From Douglas Fir table</small>
+          <input type="number" id="gl_Vcap" step="1" style="width:140px;">
+        </div>
+      </div>
+      <button id="gl_confirmSection" style="margin-top:10px; background:#8e44ad;">Confirm Section →</button>
+      <div id="gl_sectionFeedback" class="feedback-box"></div>
+    </div>
+
+    <!-- STEP 4: Three checks -->
+    <div id="gl_checksBlock" class="calc-block">
+      <h3 style="margin-top:0;">Step 4: Verify Three Checks</h3>
+      <div class="hint-box">All values come from the Douglas Fir Glu-Lam table for your selected b × d section.</div>
+      <table class="result-table" id="gl_checkTable">
+        <tr><th>Check</th><th>Required</th><th>Capacity (table)</th><th>Status</th></tr>
+        <tr>
+          <td>Moment Capacity</td>
+          <td id="gl_row_Mreq">—</td>
+          <td id="gl_row_Mcap">—</td>
+          <td id="gl_row_Mstat">—</td>
+        </tr>
+        <tr>
+          <td>Shear Capacity</td>
+          <td id="gl_row_Vreq">—</td>
+          <td id="gl_row_Vcap">—</td>
+          <td id="gl_row_Vstat">—</td>
+        </tr>
+        <tr>
+          <td>I<sub>x</sub> (stiffness)</td>
+          <td id="gl_row_Ireq">—</td>
+          <td id="gl_row_Ix">—</td>
+          <td id="gl_row_Istat">—</td>
+        </tr>
+      </table>
+      <div id="gl_checkResult" style="margin-top:14px; font-weight:bold; font-size:1em;"></div>
+    </div>
+
+    <button id="gl_toSummary" style="display:none; margin-top:20px; width:100%; background:#2ecc71; font-size:1.1em;">🎓 View Final Summary →</button>
   </div>
+</div>
 
-  <div id="badgeNotification"></div>
+<!-- ══════════════════════════════════════════ SUMMARY -->
+<div id="resultScreen" class="screen">
+  <h2>🏁 Final Summary</h2>
+  <div id="finalScore" style="background:white; padding:30px; border-radius:10px; text-align:left; max-width:560px; box-shadow:0 4px 16px rgba(0,0,0,0.1);"></div>
+  <button onclick="location.reload()" style="margin-top:20px;">🔄 Start Over</button>
+</div>
 
-  <audio id="clickSound" src="./sounds/click.mp3"></audio>
-  <audio id="successSound" src="./sounds/success.wav"></audio>
-  <audio id="errorSound" src="./sounds/error.wav"></audio>
-  <audio id="badgeSound" src="./sounds/badge.mp3"></audio>
+<div id="badgeNotification"></div>
 
-  <script src="deneme4.js"></script>
+<audio id="clickSound"   src="./sounds/click.mp3"></audio>
+<audio id="successSound" src="./sounds/success.wav"></audio>
+<audio id="errorSound"   src="./sounds/error.wav"></audio>
+<audio id="badgeSound"   src="./sounds/badge.mp3"></audio>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+  const play = id => $(id)?.play?.();
+
+  // ── score ──
+  const state = {
+    score: 100,
+    beamCount: 0, totalLoad: 0, tributaryWidth: 0, lineLoad: 0,
+    results: { Mmax: null, Vmax: null, Delta: null },
+    beamType: null,       // 'builtup' | 'glulam'
+    sectionType: null,    // '2x10' | '2x12'
+    bu: { Fb:0, Fv:0, CA:0, E:0, n1:null, n2:null, n3:null },
+    gl: { delta:null, Ireq:null }
+  };
+
+  function deduct(pts) {
+    state.score = Math.max(0, state.score - pts);
+    $('scoreLive').textContent = state.score;
+  }
+
+  // ── notifications ──
+  function showBadgeNotification(name) {
+    const b = $('badgeNotification');
+    if (!b) return;
+    b.innerHTML = `🎉 You earned: <strong>${name}</strong>`;
+    b.style.display = 'block'; b.style.opacity = '1'; b.style.animation = 'none';
+    setTimeout(() => { b.style.animation = 'fadeInOut 3s forwards'; }, 10);
+    setTimeout(() => { b.style.display = 'none'; }, 3000);
+  }
+
+  // ── screens ──
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
+    const s = $(id); if (s) { s.style.display = 'flex'; s.classList.add('active'); }
+  }
+
+  function completeStep(n) {
+    for (let i = 1; i <= n; i++) { const el = $(`step${i}`); if (el) el.classList.add('completed'); }
+  }
+
+  // ── badges ──
+  const BadgeSystem = (() => {
+    const _s = { earned: new Set(), meta: new Map(), order: [] };
+    function init(list) { list.forEach(b => { _s.meta.set(b.id, b); _s.order.push(b.id); }); render(); }
+    function earn(id) {
+      if (!_s.meta.has(id) || _s.earned.has(id)) return;
+      _s.earned.add(id); render();
+      const cfg = _s.meta.get(id);
+      play('badgeSound'); showBadgeNotification(cfg?.title || 'Badge');
+    }
+    function render() {
+      const bar = $('badgeBar'); if (!bar) return; bar.innerHTML = '';
+      _s.order.forEach(id => {
+        const cfg = _s.meta.get(id), earned = _s.earned.has(id);
+        const wrap = document.createElement('div'); wrap.className = 'badge-wrapper';
+        const img = document.createElement('img');
+        img.className = 'badge' + (earned ? '' : ' locked');
+        img.src = cfg?.img || ''; img.alt = cfg?.title || 'Badge';
+        img.title = earned ? cfg?.title : (cfg?.title + ' (locked)');
+        img.onerror = () => { img.style.background = earned ? '#2ecc71' : '#ccc'; img.style.border = '2px solid #aaa'; };
+        wrap.appendChild(img);
+        if (!earned) {
+          const lock = document.createElement('span');
+          lock.textContent = '🔒'; lock.style.cssText = 'position:absolute;font-size:1.2em;';
+          wrap.appendChild(lock);
+        }
+        bar.appendChild(wrap);
+      });
+    }
+    return { init, earn };
+  })();
+
+  // ── HiDPI canvas ──
+  function ensureHiDPI(canvas) {
+    if (!canvas) return { dpr:1, cw:0, ch:0 };
+    const dpr = window.devicePixelRatio || 1;
+    let cssW = canvas.dataset.originalWidth ? +canvas.dataset.originalWidth : (+canvas.getAttribute('width') || 400);
+    let cssH = canvas.dataset.originalHeight ? +canvas.dataset.originalHeight : (+canvas.getAttribute('height') || 400);
+    canvas.dataset.originalWidth = cssW; canvas.dataset.originalHeight = cssH;
+    canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
+    canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+    return { dpr, cw: canvas.width, ch: canvas.height };
+  }
+
+  function drawImageFit(src, dst, bg = '#fff') {
+    if (!src || !dst) return;
+    const ctx = dst.getContext('2d');
+    const { cw:DW, ch:DH } = ensureHiDPI(dst);
+    const SW = src.width, SH = src.height; if (!SW || !SH) return;
+    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,DW,DH);
+    if (bg) { ctx.fillStyle = bg; ctx.fillRect(0,0,DW,DH); }
+    const scale = Math.min(DW/SW, DH/SH);
+    ctx.drawImage(src, 0, 0, SW, SH, (DW-SW*scale)/2, (DH-SH*scale)/2, SW*scale, SH*scale);
+  }
+
+  function drawSlab(width, length, spacing, beamCount) {
+    const canvas = $('slabCanvas'); if (!canvas) return;
+    const { dpr, cw, ch } = ensureHiDPI(canvas);
+    const ctx = canvas.getContext('2d'); ctx.setTransform(1,0,0,1,0,0);
+    const PAD = 40*dpr, availW = cw-2*PAD, availH = ch-2*PAD;
+    const scale = Math.min(availW/width, availH/length);
+    const sW = width*scale, sH = length*scale;
+    const ox = (cw-sW)/2, oy = (ch-sH)/2;
+    ctx.clearRect(0,0,cw,ch); ctx.fillStyle = '#e6f2fa'; ctx.fillRect(0,0,cw,ch);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2*dpr; ctx.strokeRect(ox,oy,sW,sH);
+    const bf = Math.max(10*dpr, 12*dpr); ctx.font = `${bf}px Arial`; ctx.fillStyle = '#000';
+    ctx.strokeStyle = '#0066cc'; ctx.lineWidth = 2*dpr;
+    for (let i = 0; i < beamCount; i++) {
+      const x = ox + i*spacing*scale;
+      ctx.beginPath(); ctx.moveTo(x,oy); ctx.lineTo(x,oy+sH); ctx.stroke();
+      const lbl = `Beam ${i+1}`, tw = ctx.measureText(lbl).width;
+      ctx.fillText(lbl, x-tw/2, oy-6*dpr);
+    }
+    ctx.fillText(`Length: ${length} ft`, ox+sW+8*dpr, oy+sH/2);
+    const dimY = oy+sH+12*dpr;
+    ctx.strokeStyle='#000'; ctx.lineWidth=dpr;
+    ctx.beginPath();
+    ctx.moveTo(ox,dimY-5*dpr); ctx.lineTo(ox,dimY+5*dpr);
+    ctx.moveTo(ox+spacing*scale,dimY-5*dpr); ctx.lineTo(ox+spacing*scale,dimY+5*dpr);
+    ctx.moveTo(ox,dimY); ctx.lineTo(ox+spacing*scale,dimY); ctx.stroke();
+    const sl = `Spacing: ${spacing.toFixed(2)} ft`, sw2 = ctx.measureText(sl).width;
+    ctx.fillText(sl, ox+spacing*scale/2-sw2/2, dimY+14*dpr);
+  }
+
+  // ── feedback helpers ──
+  function showFB(id, ok, html) {
+    const el = $(id); if (!el) return;
+    el.style.display = 'block';
+    el.style.backgroundColor = ok ? '#e0f7e9' : '#fff3cd';
+    el.style.color = ok ? '#155724' : '#856404';
+    el.style.borderLeft = `4px solid ${ok ? '#2ecc71' : '#f39c12'}`;
+    el.innerHTML = html;
+    if (ok) play('successSound'); else play('errorSound');
+  }
+
+  function check(u, e, tol = 0.03) { return Math.abs(u - e) <= Math.abs(e) * tol + 0.5; }
+  function ceil(v) { return Math.ceil(v); }
+
+  // ══════════════ ORIGINAL CHECKS (unchanged) ══════════════
+
+  function updateCombinedLoadImage() {
+    const div = $('combinedLoadImage'), btn = $('toggleCombinedBtn'); if (!div||!btn) return;
+    const p=parseFloat($('permanentLoad').value)||0, s=parseFloat($('snowLoad').value)||0;
+    const w=parseFloat($('windLoad').value)||0, m=parseFloat($('mobileLoad').value)||0;
+    div.innerHTML = ''; const windDir = w>0?'+W':(w<0?'-W':'');
+    let combo = p>0&&s>0&&w!==0&&m>0?`P+S+${windDir}+M`:p>0&&w!==0&&m>0?`P+${windDir}+M`:p>0&&m>0&&s>0?'P+M+S':p>0&&m>0?'P+M':p>0?'P':'';
+    if (combo) {
+      const img = document.createElement('img');
+      img.src = `./img/${combo}.png`; img.style.maxWidth = '300px';
+      img.onerror = () => { img.style.display='none'; }; div.appendChild(img);
+      btn.style.display='inline-block';
+    } else btn.style.display='none';
+  }
+
+  function checkTotalLoad() {
+    const dead=parseFloat($('permanentLoad')?.value)||0, snow=parseFloat($('snowLoad')?.value)||0;
+    const wind=Math.abs(parseFloat($('windLoad')?.value)||0), live=parseFloat($('mobileLoad')?.value)||0;
+    const exp = dead+snow+wind+live, u = parseFloat($('inputTotalLoad')?.value);
+    if (Math.abs(u-exp)<=0.1) {
+      showFB('loadFeedback', true, `✅ Correct! Total = <strong>${exp.toFixed(2)} psi</strong>`);
+      $('continueToTributaryBtn').style.display = 'inline-block';
+      state.totalLoad = exp; BadgeSystem.earn('load');
+    } else {
+      deduct(10);
+      showFB('loadFeedback', false, `❌ Incorrect (−10 pts).<br>Hint: Sum of Dead + Snow + |Wind| + Live.`);
+      $('continueToTributaryBtn').style.display = 'none';
+    }
+  }
+
+  function checkTributary() {
+    const tribInput = parseFloat($('tributaryWidth')?.value);
+    const beamName = $('beamSelect')?.value;
+    const beamNum = parseInt(beamName.replace('Beam ',''), 10);
+    const W = parseFloat($('inputWidth').value), count = state.beamCount;
+    const spacing = W/(count-1), isEdge = beamNum===1||beamNum===count;
+    const exp = isEdge ? spacing/2 : spacing;
+    if (Math.abs(tribInput-exp)<=0.1) {
+      showFB('tribFeedback', true, `✅ Correct! Tributary Width = <strong>${exp.toFixed(2)} ft</strong>`);
+      state.tributaryWidth = exp; BadgeSystem.earn('accuracy');
+      $('step2_lineLoad').style.display='block';
+      $('step2_lineLoad').scrollIntoView({behavior:'smooth'});
+    } else {
+      deduct(10);
+      showFB('tribFeedback', false, `❌ Incorrect (−10 pts).<br>Hint: Interior = spacing. Edge = spacing/2.`);
+    }
+  }
+
+  function checkLineLoad() {
+    const exp = state.totalLoad * state.tributaryWidth;
+    const u = parseFloat($('inputLineLoad').value);
+    if (Math.abs(u-exp)<(exp*0.02+0.5)) {
+      showFB('lineLoadFeedback', true, `✅ Correct! w = <strong>${exp.toFixed(2)} lbs/ft</strong>`);
+      state.lineLoad = exp;
+      $('step3_forces').style.display='block';
+      $('step3_forces').scrollIntoView({behavior:'smooth'});
+    } else {
+      deduct(10);
+      showFB('lineLoadFeedback', false, `❌ Incorrect (−10 pts).<br>Hint: Total Load × Tributary Width.`);
+    }
+  }
+
+  function checkForces() {
+    const w = state.lineLoad, L = parseFloat($('inputLength').value);
+    const E = 1.8e6, I_dummy = 1000;
+    const expV = w*L/2, expM = w*L*L/8;
+    const w_in = w/12, L_in = L*12;
+    const expD = (5*w_in*Math.pow(L_in,4))/(384*E*I_dummy);
+    const uV=parseFloat($('inputVmax').value), uM=parseFloat($('inputMmax').value), uD=parseFloat($('inputDelta').value);
+    let html='', ok=true;
+    if (check(uV,expV)){html+=`<div style="color:#155724">✅ <strong>Vmax:</strong> Correct</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ <strong>Vmax:</strong> Incorrect (−10 pts). Expected ~${expV.toFixed(0)} lbs</div>`;}
+    if (check(uM,expM)){html+=`<div style="color:#155724">✅ <strong>Mmax:</strong> Correct</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ <strong>Mmax:</strong> Incorrect (−10 pts). Expected ~${expM.toFixed(0)} lbs-ft</div>`;}
+    if (check(uD,expD,0.05)){html+=`<div style="color:#155724">✅ <strong>Delta:</strong> Correct</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ <strong>Delta:</strong> Incorrect (−10 pts).</div>`;}
+    const fb = $('forcesFeedback');
+    fb.style.display='block'; fb.innerHTML=html;
+    fb.style.backgroundColor = ok?'#e0f7e9':'#fff3cd';
+    fb.style.borderLeft = `4px solid ${ok?'#2ecc71':'#f39c12'}`;
+    if (ok) {
+      play('successSound');
+      state.results.Vmax = uV; state.results.Mmax = uM; state.results.Delta = uD;
+      BadgeSystem.earn('strength');
+      $('continueToBeamTypeBtn').style.display='inline-block';
+      completeStep(4);
+    } else play('errorSound');
+  }
+
+  // ══════════════ BEAM TYPE SELECTION ══════════════
+  function selectBeamType(type) {
+    state.beamType = type;
+    ['choiceBuiltUp','choiceGluLam'].forEach(id => $(id).classList.remove('selected'));
+    $(type==='builtup'?'choiceBuiltUp':'choiceGluLam').classList.add('selected');
+    $('confirmBeamTypeBtn').style.display='inline-block';
+    $('beamTypeHint').style.display='none';
+  }
+
+  function populateSummaryValues() {
+    const L = parseFloat($('inputLength').value)||0;
+    ['Vmax','Mmax','w','L'].forEach(k => {
+      const v = k==='w' ? state.lineLoad.toFixed(2)+' lbs/ft'
+                : k==='L' ? L+' ft'
+                : k==='Vmax' ? (state.results.Vmax||'—')+' lbs'
+                : (state.results.Mmax||'—')+' lbs-ft';
+      const el = $('summary_'+k); if(el) el.textContent = v;
+    });
+  }
+
+  // ══════════════ BUILT-UP LOGIC ══════════════
+
+  const sectionProps = {
+    '2x10': { Sx:21.4, Ax:13.9, Ix:98.9, depth:9.25 },
+    '2x12': { Sx:31.6, Ax:16.9, Ix:178,  depth:11.25 }
+  };
+
+  function selectSection(s) {
+    state.sectionType = s;
+    ['sec2x10','sec2x12'].forEach(id => $(id).classList.remove('selected'));
+    $('sec'+s.replace('x','x')).classList.add('selected');
+    $('bu_caBlock').style.display='block';
+    $('bu_caBlock').scrollIntoView({behavior:'smooth'});
+  }
+
+  function confirmBUParams() {
+    const Fb=parseFloat($('bu_Fb').value), Fv=parseFloat($('bu_Fv').value);
+    const CA=parseFloat($('bu_CA').value), E=parseFloat($('bu_E').value);
+    if (!Fb||!Fv||!CA||!E||CA<0.79||CA>1.01) {
+      alert('Please fill in all adjustment factor fields. CA must be between 0.80 and 1.00.'); return;
+    }
+    state.bu = { Fb, Fv, CA, E, n1:null, n2:null, n3:null };
+    $('bu_bendingBlock').style.display='block';
+    $('bu_bendingBlock').scrollIntoView({behavior:'smooth'});
+  }
+
+  function checkBUBending() {
+    const { Fb, CA } = state.bu;
+    const Fb_prime = Fb * CA;
+    const Mmax_in = state.results.Mmax * 12; // convert ft to in
+    const Sreq = Mmax_in / Fb_prime;
+    const Sx = sectionProps[state.sectionType].Sx;
+    const n1_exact = Sreq / Sx;
+    const n1 = ceil(n1_exact);
+
+    const uFbp = parseFloat($('bu_Fb_prime').value);
+    const uSreq = parseFloat($('bu_Sreq').value);
+    const un1  = parseInt($('bu_n1').value);
+
+    let html='', ok=true;
+    if(check(uFbp,Fb_prime)){html+=`<div style="color:#155724">✅ F<sub>b</sub>' = ${Fb_prime.toFixed(0)} psi ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ F<sub>b</sub>' should be ${Fb_prime.toFixed(0)} psi (−5 pts)</div>`;}
+    if(check(uSreq,Sreq)){html+=`<div style="color:#155724">✅ S<sub>req</sub> = ${Sreq.toFixed(2)} in³ ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ S<sub>req</sub> should be ${Sreq.toFixed(2)} in³ (−5 pts)</div>`;}
+    if(un1===n1){html+=`<div style="color:#155724">✅ n₁ = ${n1} ✓</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₁ should be ${n1} (round up from ${n1_exact.toFixed(2)}) (−10 pts)</div>`;}
+
+    showFB('bu_bendingFeedback', ok, html);
+    if(ok){
+      state.bu.n1 = n1;
+      $('bu_show_n1').textContent = n1;
+      $('bu_shearBlock').style.display='block';
+      $('bu_shearBlock').scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+  function checkBUShear() {
+    const { Fv, CA } = state.bu;
+    const Fv_prime = Fv * CA;
+    const Areq = 1.5 * state.results.Vmax / Fv_prime;
+    const Ax = sectionProps[state.sectionType].Ax;
+    const n2_exact = Areq / Ax;
+    const n2 = ceil(n2_exact);
+
+    const uFvp = parseFloat($('bu_Fv_prime').value);
+    const uAreq = parseFloat($('bu_Areq').value);
+    const un2   = parseInt($('bu_n2').value);
+
+    let html='', ok=true;
+    if(check(uFvp,Fv_prime)){html+=`<div style="color:#155724">✅ F<sub>v</sub>' = ${Fv_prime.toFixed(0)} psi ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ F<sub>v</sub>' should be ${Fv_prime.toFixed(0)} psi (−5 pts)</div>`;}
+    if(check(uAreq,Areq)){html+=`<div style="color:#155724">✅ A<sub>req</sub> = ${Areq.toFixed(2)} in² ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ A<sub>req</sub> should be ${Areq.toFixed(2)} in² (−5 pts)</div>`;}
+    if(un2===n2){html+=`<div style="color:#155724">✅ n₂ = ${n2} ✓</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₂ should be ${n2} (round up from ${n2_exact.toFixed(2)}) (−10 pts)</div>`;}
+
+    showFB('bu_shearFeedback', ok, html);
+    if(ok){
+      state.bu.n2 = n2;
+      $('bu_show_n2').textContent = n2;
+      $('bu_deflBlock').style.display='block';
+      $('bu_deflBlock').scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+  function checkBUDefl() {
+    const { E } = state.bu;
+    const L_ft = parseFloat($('inputLength').value);
+    const L_in = L_ft * 12;
+    const delta_max = L_in / 360;
+    const w_in = state.lineLoad / 12;
+    const Ireq = (5 * w_in * Math.pow(L_in,4)) / (384 * E * delta_max);
+    const Ix = sectionProps[state.sectionType].Ix;
+    const n3_exact = Ireq / Ix;
+    const n3 = ceil(n3_exact);
+
+    const uDelta = parseFloat($('bu_delta').value);
+    const uIreq  = parseFloat($('bu_Ireq').value);
+    const un3    = parseInt($('bu_n3').value);
+
+    let html='', ok=true;
+    if(check(uDelta,delta_max)){html+=`<div style="color:#155724">✅ Δ<sub>max</sub> = ${delta_max.toFixed(3)}" ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ Δ<sub>max</sub> should be ${delta_max.toFixed(3)}" (−5 pts)</div>`;}
+    if(check(uIreq,Ireq)){html+=`<div style="color:#155724">✅ I<sub>req</sub> = ${Ireq.toFixed(2)} in⁴ ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ I<sub>req</sub> should be ${Ireq.toFixed(2)} in⁴ (−5 pts)</div>`;}
+    if(un3===n3){html+=`<div style="color:#155724">✅ n₃ = ${n3} ✓</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₃ should be ${n3} (round up from ${n3_exact.toFixed(2)}) (−10 pts)</div>`;}
+
+    showFB('bu_deflFeedback', ok, html);
+    if(ok){
+      state.bu.n3 = n3;
+      $('bu_show_n3').textContent = n3;
+      $('bu_finalBlock').style.display='block';
+      $('bu_finalBlock').scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+  function checkBUFinal() {
+    const { n1, n2, n3 } = state.bu;
+    if(n1===null||n2===null||n3===null){ alert('Complete all three checks first.'); return; }
+    const nFinal = Math.max(n1, n2, n3);
+    $('bu_show_nfinal').textContent = nFinal;
+    const uN = parseInt($('bu_nFinal').value);
+    if(uN===nFinal){
+      showFB('bu_finalFeedback', true, `✅ Correct! n = max(${n1}, ${n2}, ${n3}) = <strong>${nFinal}</strong>. Now check W/D ratio.`);
+      BadgeSystem.earn('designer');
+      $('bu_wdBlock').style.display='block';
+      $('bu_wdBlock').scrollIntoView({behavior:'smooth'});
+    } else {
+      deduct(10);
+      showFB('bu_finalFeedback', false, `❌ Incorrect (−10 pts). n = max(n₁=${n1}, n₂=${n2}, n₃=${n3}) = ${nFinal}`);
+    }
+  }
+
+  function checkBUWD() {
+    const { n3 } = state.bu;
+    const nFinal = Math.max(state.bu.n1, state.bu.n2, state.bu.n3);
+    const depth  = sectionProps[state.sectionType].depth;
+    const W_exp  = nFinal * 1.5;
+    const WD_exp = W_exp / depth;
+
+    const uW  = parseFloat($('bu_W').value);
+    const uD  = parseFloat($('bu_D').value);
+    const uWD = parseFloat($('bu_WD').value);
+
+    let html='', ok=true;
+    if(check(uW,W_exp)){html+=`<div style="color:#155724">✅ W = ${W_exp.toFixed(2)}" ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ W should be ${W_exp.toFixed(2)}" (n×1.5") (−5 pts)</div>`;}
+    if(check(uD,depth)){html+=`<div style="color:#155724">✅ D = ${depth}" ✓</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ D should be ${depth}" for a ${state.sectionType} (−5 pts)</div>`;}
+    if(check(uWD,WD_exp)){
+      html+=`<div style="color:#155724">✅ W/D = ${WD_exp.toFixed(3)} ✓</div>`;
+      if(WD_exp<=0.5) html+=`<div style="color:#155724; margin-top:6px;"><strong>✅ W/D ≤ 0.5 — Built-up beam is valid!</strong></div>`;
+      else            html+=`<div style="color:#856404; margin-top:6px;"><strong>⚠️ W/D > 0.5 — Should switch to Glu-Lam!</strong></div>`;
+    } else {
+      ok=false; deduct(5); html+=`<div style="color:#856404">❌ W/D should be ${WD_exp.toFixed(3)} (−5 pts)</div>`;
+    }
+
+    showFB('bu_wdFeedback', ok, html);
+    if(ok){ $('bu_toSummary').style.display='block'; completeStep(6); }
+  }
+
+  // ══════════════ GLU-LAM LOGIC ══════════════
+
+  function checkGLDelta() {
+    const L_ft = parseFloat($('inputLength').value);
+    const exp = L_ft * 12 / 360;
+    const u = parseFloat($('gl_delta').value);
+    if(check(u,exp)){
+      showFB('gl_deltaFeedback', true, `✅ Δ<sub>max</sub> = ${exp.toFixed(3)}" ✓`);
+      state.gl.delta = exp;
+      $('gl_IreqBlock').style.display='block';
+      $('gl_IreqBlock').scrollIntoView({behavior:'smooth'});
+    } else {
+      deduct(5);
+      showFB('gl_deltaFeedback', false, `❌ Δ<sub>max</sub> should be ${exp.toFixed(3)}" = L×12/360 (−5 pts)`);
+    }
+  }
+
+  function checkGLIreq() {
+    const L_ft = parseFloat($('inputLength').value);
+    const L_in = L_ft * 12;
+    const w_in = state.lineLoad / 12;
+    const E = 1.8e6;
+    const exp = (5 * w_in * Math.pow(L_in,4)) / (384 * E * state.gl.delta);
+    const u = parseFloat($('gl_Ireq').value);
+    if(check(u,exp)){
+      showFB('gl_IreqFeedback', true, `✅ I<sub>req</sub> = ${exp.toFixed(1)} in⁴ ✓`);
+      state.gl.Ireq = exp;
+      $('gl_sectionBlock').style.display='block';
+      $('gl_sectionBlock').scrollIntoView({behavior:'smooth'});
+    } else {
+      deduct(10);
+      showFB('gl_IreqFeedback', false, `❌ I<sub>req</sub> should be ~${exp.toFixed(1)} in⁴ (−10 pts). Use E=1.8×10⁶ psi, L in inches.`);
+    }
+  }
+
+  function confirmGLSection() {
+    const b    = parseFloat($('gl_b').value);
+    const d    = parseFloat($('gl_d').value);
+    const Ix   = parseFloat($('gl_Ix').value);
+    const Mcap = parseFloat($('gl_Mcap').value);
+    const Vcap = parseFloat($('gl_Vcap').value);
+
+    if(!b||!d||!Ix||!Mcap||!Vcap){ alert('Please fill in all section property fields.'); return; }
+
+    if(Ix < state.gl.Ireq) {
+      deduct(10);
+      showFB('gl_sectionFeedback', false, `❌ This section has I<sub>x</sub> = ${Ix} in⁴ which is less than I<sub>req</sub> = ${state.gl.Ireq.toFixed(1)} in⁴. Choose a larger section. (−10 pts)`);
+      return;
+    }
+
+    showFB('gl_sectionFeedback', true, `✅ Section ${b}" × ${d}" accepted. I<sub>x</sub> = ${Ix} in⁴ ≥ I<sub>req</sub>. Now verifying all checks...`);
+
+    // populate check table
+    const Mreq = state.results.Mmax;
+    const Vreq = state.results.Vmax;
+    const Ireq = state.gl.Ireq;
+
+    $('gl_row_Mreq').textContent = Mreq.toFixed(0) + ' lbs-ft';
+    $('gl_row_Mcap').textContent = Mcap.toLocaleString() + ' lbs-ft';
+    $('gl_row_Mstat').innerHTML  = Mcap >= Mreq ? '<span class="tag-green">✅ O.K.</span>' : '<span class="tag-red">❌ Fail</span>';
+
+    $('gl_row_Vreq').textContent = Vreq.toFixed(0) + ' lbs';
+    $('gl_row_Vcap').textContent = Vcap.toLocaleString() + ' lbs';
+    $('gl_row_Vstat').innerHTML  = Vcap >= Vreq ? '<span class="tag-green">✅ O.K.</span>' : '<span class="tag-red">❌ Fail</span>';
+
+    $('gl_row_Ireq').textContent = Ireq.toFixed(1) + ' in⁴';
+    $('gl_row_Ix').textContent   = Ix + ' in⁴';
+    $('gl_row_Istat').innerHTML  = Ix >= Ireq ? '<span class="tag-green">✅ O.K.</span>' : '<span class="tag-red">❌ Fail</span>';
+
+    $('gl_checksBlock').style.display='block';
+    $('gl_checksBlock').scrollIntoView({behavior:'smooth'});
+
+    const allOk = Mcap>=Mreq && Vcap>=Vreq && Ix>=Ireq;
+    const res = $('gl_checkResult');
+    if(allOk){
+      res.innerHTML = `<span style="color:#155724; font-size:1.1em;">🎉 All checks pass! Use <strong>${b}" × ${d}"</strong> Glu-Lam beam.</span>`;
+      BadgeSystem.earn('engineer');
+      $('gl_toSummary').style.display='block';
+      completeStep(6);
+    } else {
+      deduct(15);
+      res.innerHTML = `<span style="color:#721c24;">❌ One or more checks failed (−15 pts). Select a larger section and try again.</span>`;
+      $('gl_checksBlock').style.display='none';
+      $('gl_sectionBlock').scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+  // ══════════════ SUMMARY ══════════════
+  function buildSummary(type) {
+    const L = parseFloat($('inputLength').value)||0;
+    let designResult = '';
+    if(type==='builtup'){
+      const n = Math.max(state.bu.n1,state.bu.n2,state.bu.n3);
+      const sec = state.sectionType;
+      const W = n*1.5, D = sectionProps[sec].depth;
+      designResult = `
+        <li><strong>Beam Type:</strong> Built-Up Beam</li>
+        <li><strong>Section:</strong> ${n} — ${sec}s</li>
+        <li><strong>n₁ (Bending):</strong> ${state.bu.n1}</li>
+        <li><strong>n₂ (Shear):</strong> ${state.bu.n2}</li>
+        <li><strong>n₃ (Deflection):</strong> ${state.bu.n3}</li>
+        <li><strong>Final n:</strong> ${n}</li>
+        <li><strong>W/D:</strong> ${(W/D).toFixed(3)} ${W/D<=0.5?'✅':'⚠️'}</li>`;
+    } else {
+      designResult = `
+        <li><strong>Beam Type:</strong> Glu-Lam Beam (Douglas Fir)</li>
+        <li><strong>Section:</strong> ${$('gl_b').value}" × ${$('gl_d').value}"</li>
+        <li><strong>I<sub>req</sub>:</strong> ${state.gl.Ireq.toFixed(1)} in⁴</li>
+        <li><strong>I<sub>x</sub> (table):</strong> ${$('gl_Ix').value} in⁴</li>
+        <li><strong>Moment Capacity:</strong> ${parseInt($('gl_Mcap').value).toLocaleString()} lbs-ft ✅</li>
+        <li><strong>Shear Capacity:</strong> ${parseInt($('gl_Vcap').value).toLocaleString()} lbs ✅</li>`;
+    }
+
+    $('finalScore').innerHTML = `
+      <h3 style="margin-top:0;">🏗️ Design Complete</h3>
+      <ul style="line-height:2;">
+        <li><strong>Final Score:</strong> <span style="font-size:1.3em; color:#0077cc;">${state.score}/100</span></li>
+        <li><strong>Badges Earned:</strong> ${document.querySelectorAll('#badgeBar .badge:not(.locked)').length}</li>
+        <hr style="margin:10px 0;">
+        <li><strong>Span L:</strong> ${L} ft</li>
+        <li><strong>Line Load w:</strong> ${state.lineLoad.toFixed(2)} lbs/ft</li>
+        <li><strong>V<sub>max</sub>:</strong> ${state.results.Vmax} lbs</li>
+        <li><strong>M<sub>max</sub>:</strong> ${state.results.Mmax} lbs-ft</li>
+        <hr style="margin:10px 0;">
+        ${designResult}
+      </ul>`;
+    completeStep(7);
+  }
+
+  // ══════════════ BOOT ══════════════
+  document.addEventListener('DOMContentLoaded', () => {
+
+    BadgeSystem.init([
+      { id:'accuracy', title:'Accuracy Ace',    img:'./img/badge1.png' },
+      { id:'load',     title:'Load Master',     img:'./img/badge2.png' },
+      { id:'strength', title:'Strength Solver', img:'./img/badge3.png' },
+      { id:'designer', title:'Beam Designer',   img:'./img/badge4.png' },
+      { id:'engineer', title:'Glu-Lam Engineer',img:'./img/badge5.png' }
+    ]);
+
+    // nav
+    on($('continueBtn'),          'click', () => { play('clickSound'); showScreen('canvasScreen'); completeStep(1); });
+    on($('backBtn'),              'click', () => { play('clickSound'); showScreen('introScreen'); });
+    on($('continueToLoadBtn'),    'click', () => {
+      play('clickSound'); showScreen('loadScreen');
+      const src=$('slabCanvas'), dst=$('loadCanvas');
+      if(src&&dst){ ensureHiDPI(dst); drawImageFit(src,dst,'#e6f2fa'); }
+    });
+    on($('backToSlabBtn'),        'click', () => { play('clickSound'); showScreen('canvasScreen'); });
+    on($('continueToTributaryBtn'),'click', () => {
+      play('clickSound'); showScreen('tributaryScreen');
+      const orig=$('loadCanvas'), dest=$('loadCanvasPreview');
+      ensureHiDPI(dest); drawImageFit(orig,dest,'#e6f2fa');
+      $('combinedImagePreview').innerHTML = $('combinedLoadImage').innerHTML;
+      completeStep(3);
+    });
+    on($('continueToBeamTypeBtn'),'click', () => {
+      play('clickSound'); showScreen('beamTypeScreen');
+      populateSummaryValues(); completeStep(4);
+    });
+
+    on($('confirmBeamTypeBtn'), 'click', () => {
+      play('clickSound');
+      if(!state.beamType){ alert('Please select a beam type.'); return; }
+      completeStep(5);
+      if(state.beamType==='builtup'){
+        showScreen('builtupScreen');
+        // populate given values
+        $('bu_Vmax').textContent = state.results.Vmax;
+        $('bu_Mmax').textContent = state.results.Mmax;
+        $('bu_w').textContent    = state.lineLoad.toFixed(2);
+        $('bu_L').textContent    = parseFloat($('inputLength').value);
+      } else {
+        showScreen('glulamScreen');
+        $('gl_Vmax').textContent = state.results.Vmax;
+        $('gl_Mmax').textContent = state.results.Mmax;
+        $('gl_w').textContent    = state.lineLoad.toFixed(2);
+        $('gl_L').textContent    = parseFloat($('inputLength').value);
+      }
+    });
+
+    // draw slab
+    on($('drawCanvasBtn'), 'click', () => {
+      play('clickSound');
+      const W=parseFloat($('inputWidth')?.value), L=parseFloat($('inputLength')?.value);
+      const B=parseInt($('inputBeamCount')?.value,10);
+      if(isNaN(W)||isNaN(L)||isNaN(B)||B<2){ alert('Invalid dimensions'); return; }
+      const sp=W/(B-1); state.beamCount=B;
+      $('spacingInfo').textContent=`Calculated spacing: ${sp.toFixed(2)} ft`;
+      drawSlab(W,L,sp,B); completeStep(2);
+      const sel=$('beamSelect'); sel.innerHTML='';
+      for(let i=1;i<=B;i++){ const o=document.createElement('option'); o.value=`Beam ${i}`; o.textContent=`Beam ${i}`; sel.appendChild(o); }
+    });
+
+    // load screen
+    on($('checkTotalLoadBtn'), 'click', () => { play('clickSound'); checkTotalLoad(); });
+    ['permanentLoad','snowLoad','mobileLoad'].forEach(id => {
+      on($(id),'input',()=>updateCombinedLoadImage());
+    });
+    on($('windLoad'),'input',(e)=>{
+      const v=parseFloat(e.target.value);
+      $('imgWindPositive').style.display=v>0?'inline-block':'none';
+      $('imgWindNegative').style.display=v<0?'inline-block':'none';
+      updateCombinedLoadImage();
+    });
+    on($('toggleCombinedBtn'),'click',()=>{
+      const d=$('combinedLoadImage');
+      d.style.display=d.style.display==='none'?'block':'none';
+      $('toggleCombinedBtn').textContent=d.style.display==='none'?'Show Combined Loads':'Hide Combined Loads';
+    });
+
+    // tributary / forces
+    on($('submitTribBtn'),   'click', () => { play('clickSound'); checkTributary(); });
+    on($('checkLineLoadBtn'),'click', () => { play('clickSound'); checkLineLoad(); });
+    on($('checkForcesBtn'),  'click', () => { play('clickSound'); checkForces(); });
+
+    // beam type
+    window.selectBeamType = selectBeamType;
+
+    // built-up
+    window.selectSection = selectSection;
+    on($('bu_confirmParams'),'click', () => { play('clickSound'); confirmBUParams(); });
+    on($('bu_checkBending'),  'click', () => { play('clickSound'); checkBUBending(); });
+    on($('bu_checkShear'),    'click', () => { play('clickSound'); checkBUShear(); });
+    on($('bu_checkDefl'),     'click', () => { play('clickSound'); checkBUDefl(); });
+    on($('bu_checkFinal'),    'click', () => { play('clickSound'); checkBUFinal(); });
+    on($('bu_checkWD'),       'click', () => { play('clickSound'); checkBUWD(); });
+    on($('bu_toSummary'),     'click', () => { play('clickSound'); showScreen('resultScreen'); buildSummary('builtup'); });
+
+    // glulam
+    on($('gl_checkDelta'),     'click', () => { play('clickSound'); checkGLDelta(); });
+    on($('gl_checkIreq'),      'click', () => { play('clickSound'); checkGLIreq(); });
+    on($('gl_confirmSection'), 'click', () => { play('clickSound'); confirmGLSection(); });
+    on($('gl_toSummary'),      'click', () => { play('clickSound'); showScreen('resultScreen'); buildSummary('glulam'); });
+
+  });
+})();
+</script>
 </body>
 </html>
-
-
-
-
-
