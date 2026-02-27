@@ -415,7 +415,7 @@
       <!-- W/D check -->
       <div id="bu_wdBlock" class="calc-block" style="display:none; background:#f0fff4; border-color:#2ecc71;">
         <h3 style="margin-top:0; color:#27ae60;">✅ W/D Geometry Check</h3>
-        <p style="font-size:0.88em;">Total Width W = n × 1.5" &nbsp;|&nbsp; Depth D = actual section depth</p>
+        <p style="font-size:0.88em;">Total Width W = n × 1.5" (nominal) &nbsp;|&nbsp; Depth D = nominal section depth (2×10 → 10", 2×12 → 12")</p>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <div class="input-card">
             <label>W (in)</label>
@@ -424,7 +424,7 @@
           </div>
           <div class="input-card">
             <label>D (in)</label>
-            <small>Actual depth (e.g. 9.25 or 11.25)</small>
+            <small>Nominal depth (2×10 → 10", 2×12 → 12")</small>
             <input type="number" id="bu_D" step="0.01" style="width:120px;">
           </div>
           <div class="input-card">
@@ -823,8 +823,8 @@
   // ══════════════ BUILT-UP LOGIC ══════════════
 
   const sectionProps = {
-    '2x10': { Sx:21.4, Ax:13.9, Ix:98.9, depth:9.25 },
-    '2x12': { Sx:31.6, Ax:16.9, Ix:178,  depth:11.25 }
+    '2x10': { Sx:21.4, Ax:13.9, Ix:98.9, depth:10 },
+    '2x12': { Sx:31.6, Ax:16.9, Ix:178,  depth:12 }
   };
 
   function selectSection(s) {
