@@ -584,7 +584,8 @@
     beamType: null,       // 'builtup' | 'glulam'
     sectionType: null,    // '2x10' | '2x12'
     bu: { Fb:0, Fv:0, CA:0, E:0, n1:null, n2:null, n3:null },
-    gl: { delta:null, Ireq:null }
+    gl: { delta:null, Ireq:null },
+    attempts: { bending:0, shear:0, defl:0, wdcheck:0, gl_delta:0, gl_Ireq:0 }
   };
 
   function deduct(pts) {
@@ -859,13 +860,14 @@
     const uSreq = parseFloat($('bu_Sreq').value);
     const un1  = parseInt($('bu_n1').value);
 
+    const revealB = state.attempts.bending >= 1;
     let html='', ok=true;
     if(check(uFbp,Fb_prime)){html+=`<div style="color:#155724">✅ F<sub>b</sub>' = ${Fb_prime.toFixed(0)} psi ✓</div>`;}
-    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ F<sub>b</sub>' should be ${Fb_prime.toFixed(0)} psi (−5 pts)</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ F<sub>b</sub>'${revealB ? ` = <strong>${Fb_prime.toFixed(0)} psi</strong>` : ''} is incorrect (−5 pts)</div>`;}
     if(check(uSreq,Sreq)){html+=`<div style="color:#155724">✅ S<sub>req</sub> = ${Sreq.toFixed(2)} in³ ✓</div>`;}
-    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ S<sub>req</sub> should be ${Sreq.toFixed(2)} in³ (−5 pts)</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ S<sub>req</sub>${revealB ? ` = <strong>${Sreq.toFixed(2)} in³</strong>` : ''} is incorrect (−5 pts)</div>`;}
     if(un1===n1){html+=`<div style="color:#155724">✅ n₁ = ${n1} ✓</div>`;}
-    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₁ should be ${n1} (round up from ${n1_exact.toFixed(2)}) (−10 pts)</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₁${revealB ? ` = <strong>${n1}</strong> (round up from ${n1_exact.toFixed(2)})` : ''} is incorrect (−10 pts)</div>`;}
 
     showFB('bu_bendingFeedback', ok, html);
     if(ok){
@@ -874,6 +876,7 @@
       $('bu_shearBlock').style.display='block';
       $('bu_shearBlock').scrollIntoView({behavior:'smooth'});
     } else {
+      state.attempts.bending++;
       $('hint_bending').style.display='block';
     }
   }
@@ -890,13 +893,14 @@
     const uAreq = parseFloat($('bu_Areq').value);
     const un2   = parseInt($('bu_n2').value);
 
+    const revealS = state.attempts.shear >= 1;
     let html='', ok=true;
     if(check(uFvp,Fv_prime)){html+=`<div style="color:#155724">✅ F<sub>v</sub>' = ${Fv_prime.toFixed(0)} psi ✓</div>`;}
-    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ F<sub>v</sub>' should be ${Fv_prime.toFixed(0)} psi (−5 pts)</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ F<sub>v</sub>'${revealS ? ` = <strong>${Fv_prime.toFixed(0)} psi</strong>` : ''} is incorrect (−5 pts)</div>`;}
     if(check(uAreq,Areq)){html+=`<div style="color:#155724">✅ A<sub>req</sub> = ${Areq.toFixed(2)} in² ✓</div>`;}
-    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ A<sub>req</sub> should be ${Areq.toFixed(2)} in² (−5 pts)</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ A<sub>req</sub>${revealS ? ` = <strong>${Areq.toFixed(2)} in²</strong>` : ''} is incorrect (−5 pts)</div>`;}
     if(un2===n2){html+=`<div style="color:#155724">✅ n₂ = ${n2} ✓</div>`;}
-    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₂ should be ${n2} (round up from ${n2_exact.toFixed(2)}) (−10 pts)</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₂${revealS ? ` = <strong>${n2}</strong> (round up from ${n2_exact.toFixed(2)})` : ''} is incorrect (−10 pts)</div>`;}
 
     showFB('bu_shearFeedback', ok, html);
     if(ok){
@@ -905,6 +909,7 @@
       $('bu_deflBlock').style.display='block';
       $('bu_deflBlock').scrollIntoView({behavior:'smooth'});
     } else {
+      state.attempts.shear++;
       $('hint_shear').style.display='block';
     }
   }
@@ -924,13 +929,14 @@
     const uIreq  = parseFloat($('bu_Ireq').value);
     const un3    = parseInt($('bu_n3').value);
 
+    const revealD = state.attempts.defl >= 1;
     let html='', ok=true;
     if(check(uDelta,delta_max)){html+=`<div style="color:#155724">✅ Δ<sub>max</sub> = ${delta_max.toFixed(3)}" ✓</div>`;}
-    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ Δ<sub>max</sub> should be ${delta_max.toFixed(3)}" (−5 pts)</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ Δ<sub>max</sub>${revealD ? ` = <strong>${delta_max.toFixed(3)}"</strong>` : ''} is incorrect (−5 pts)</div>`;}
     if(check(uIreq,Ireq)){html+=`<div style="color:#155724">✅ I<sub>req</sub> = ${Ireq.toFixed(2)} in⁴ ✓</div>`;}
-    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ I<sub>req</sub> should be ${Ireq.toFixed(2)} in⁴ (−5 pts)</div>`;}
+    else{ok=false;deduct(5);html+=`<div style="color:#856404">❌ I<sub>req</sub>${revealD ? ` = <strong>${Ireq.toFixed(2)} in⁴</strong>` : ''} is incorrect (−5 pts)</div>`;}
     if(un3===n3){html+=`<div style="color:#155724">✅ n₃ = ${n3} ✓</div>`;}
-    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₃ should be ${n3} (round up from ${n3_exact.toFixed(2)}) (−10 pts)</div>`;}
+    else{ok=false;deduct(10);html+=`<div style="color:#856404">❌ n₃${revealD ? ` = <strong>${n3}</strong> (round up from ${n3_exact.toFixed(2)})` : ''} is incorrect (−10 pts)</div>`;}
 
     showFB('bu_deflFeedback', ok, html);
     if(ok){
@@ -939,6 +945,7 @@
       $('bu_finalBlock').style.display='block';
       $('bu_finalBlock').scrollIntoView({behavior:'smooth'});
     } else {
+      state.attempts.defl++;
       $('hint_defl').style.display='block';
     }
   }
@@ -1001,7 +1008,9 @@
       $('gl_IreqBlock').scrollIntoView({behavior:'smooth'});
     } else {
       deduct(5);
-      showFB('gl_deltaFeedback', false, `❌ Δ<sub>max</sub> should be ${exp.toFixed(3)}" = L×12/360 (−5 pts)`);
+      const revealGD = state.attempts.gl_delta >= 1;
+      showFB('gl_deltaFeedback', false, `❌ Δ<sub>max</sub>${revealGD ? ` = <strong>${exp.toFixed(3)}"</strong> (L×12/360)` : ' is incorrect'} (−5 pts)`);
+      state.attempts.gl_delta++;
       $('hint_gl_delta').style.display='block';
     }
   }
@@ -1020,7 +1029,9 @@
       $('gl_sectionBlock').scrollIntoView({behavior:'smooth'});
     } else {
       deduct(10);
-      showFB('gl_IreqFeedback', false, `❌ I<sub>req</sub> should be ~${exp.toFixed(1)} in⁴ (−10 pts). Use E=1.8×10⁶ psi, L in inches.`);
+      const revealGI = state.attempts.gl_Ireq >= 1;
+      showFB('gl_IreqFeedback', false, `❌ I<sub>req</sub>${revealGI ? ` = <strong>${exp.toFixed(1)} in⁴</strong>` : ' is incorrect'} (−10 pts).${revealGI ? '' : ' Use E=1.8×10⁶ psi, L in inches.'}`);
+      state.attempts.gl_Ireq++;
       $('hint_gl_Ireq').style.display='block';
     }
   }
