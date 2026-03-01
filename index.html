@@ -715,16 +715,52 @@
 
   function updateCombinedLoadImage() {
     const div = $('combinedLoadImage'), btn = $('toggleCombinedBtn'); if (!div||!btn) return;
-    const p=parseFloat($('permanentLoad').value)||0, s=parseFloat($('snowLoad').value)||0;
-    const w=parseFloat($('windLoad').value)||0, m=parseFloat($('mobileLoad').value)||0;
-    div.innerHTML = ''; const windDir = w>0?'+W':(w<0?'-W':'');
-    let combo = p>0&&s>0&&w!==0&&m>0?`P+S+${windDir}+M`:p>0&&w!==0&&m>0?`P+${windDir}+M`:p>0&&m>0&&s>0?'P+M+S':p>0&&m>0?'P+M':p>0?'P':'';
+    const p = parseFloat($('permanentLoad').value) || 0;
+    const s = parseFloat($('snowLoad').value)     || 0;
+    const w = parseFloat($('windLoad').value)     || 0;
+    const m = parseFloat($('mobileLoad').value)   || 0;
+
+    // individual load icons (show/hide as values are entered)
+    $('imgPermanent').style.display    = p > 0 ? 'inline-block' : 'none';
+    $('imgSnow').style.display         = s > 0 ? 'inline-block' : 'none';
+    $('imgMobile').style.display       = m > 0 ? 'inline-block' : 'none';
+    $('imgWindPositive').style.display = w > 0 ? 'inline-block' : 'none';
+    $('imgWindNegative').style.display = w < 0 ? 'inline-block' : 'none';
+
+    // match exact filenames in /img folder:
+    // P.png | P+S.png | P+M+S.png | P+M+-W.png
+    // P++W.png | P++W+M.png
+    // P+S++W.png | P+S++W+M.png | P+S+-W.png | P+S+-W+M.png
+    div.innerHTML = '';
+    let combo = '';
+    const hasP = p > 0, hasS = s > 0, hasM = m > 0;
+    const posW = w > 0, negW = w < 0, hasW = w !== 0;
+    const windTag = posW ? '+W' : '+-W';   // +W = positive wind, +-W = negative wind
+
+    if (hasP && hasS && posW && hasM) combo = 'P+S++W+M';
+    else if (hasP && hasS && posW)    combo = 'P+S++W';
+    else if (hasP && hasS && negW && hasM) combo = 'P+S+-W+M';
+    else if (hasP && hasS && negW)    combo = 'P+S+-W';
+    else if (hasP && hasS && hasM)    combo = 'P+M+S';
+    else if (hasP && hasS)            combo = 'P+S';
+    else if (hasP && posW && hasM)    combo = 'P++W+M';
+    else if (hasP && posW)            combo = 'P++W';
+    else if (hasP && negW && hasM)    combo = 'P+M+-W';
+    else if (hasP && negW)            combo = 'P+M+-W';   // use closest available
+    else if (hasP && hasM)            combo = 'P+M+S';    // no P+M only file, closest
+    else if (hasP)                    combo = 'P';
+
     if (combo) {
       const img = document.createElement('img');
-      img.src = `./img/${combo}.png`; img.style.maxWidth = '300px';
-      img.onerror = () => { img.style.display='none'; }; div.appendChild(img);
-      btn.style.display='inline-block';
-    } else btn.style.display='none';
+      img.src = `./img/${combo}.png`;
+      img.style.maxWidth = '300px';
+      img.onerror = () => { img.style.display = 'none'; };
+      div.appendChild(img);
+      btn.style.display = 'inline-block';
+      btn.textContent = div.style.display === 'none' ? 'Show Combined Loads' : 'Hide Combined Loads';
+    } else {
+      btn.style.display = 'none';
+    }
   }
 
   function checkTotalLoad() {
@@ -1197,14 +1233,9 @@
 
     // load screen
     on($('checkTotalLoadBtn'), 'click', () => { play('clickSound'); checkTotalLoad(); });
-    ['permanentLoad','snowLoad','mobileLoad'].forEach(id => {
-      on($(id),'input',()=>updateCombinedLoadImage());
-    });
-    on($('windLoad'),'input',(e)=>{
-      const v=parseFloat(e.target.value);
-      $('imgWindPositive').style.display=v>0?'inline-block':'none';
-      $('imgWindNegative').style.display=v<0?'inline-block':'none';
-      updateCombinedLoadImage();
+    // all four load inputs trigger the combined image + individual icon update
+    ['permanentLoad','snowLoad','mobileLoad','windLoad'].forEach(id => {
+      on($(id), 'input', () => updateCombinedLoadImage());
     });
     on($('toggleCombinedBtn'),'click',()=>{
       const d=$('combinedLoadImage');
