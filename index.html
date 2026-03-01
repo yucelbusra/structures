@@ -60,7 +60,10 @@
     .section-option:hover { border-color: #0077cc; }
     .section-option.selected { border-color: #2ecc71; background: #eafaf1; font-weight: bold; }
 
-    #badgeNotification { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; background-color: rgba(0,119,204,0.95); color: white; border-radius: 10px; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 1.5em; font-weight: bold; text-align: center; }
+    #badgeNotification { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 28px 44px; background: linear-gradient(135deg, #0077cc, #005fa3); color: white; border-radius: 16px; z-index: 2000; box-shadow: 0 8px 32px rgba(0,0,0,0.35); font-size: 1.2em; font-weight: bold; text-align: center; min-width: 260px; }
+    #badgeNotification img { width: 90px; height: 90px; object-fit: contain; border-radius: 12px; border: 3px solid rgba(255,255,255,0.5); margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.15); }
+    @keyframes badgePop { 0%{opacity:0; transform:translate(-50%,-50%) scale(0.6);} 60%{transform:translate(-50%,-50%) scale(1.08);} 100%{opacity:1; transform:translate(-50%,-50%) scale(1);} }
+    @keyframes badgeFade { 0%{opacity:1;} 100%{opacity:0;} }
     @keyframes fadeInOut { 0%{opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{opacity:0;} }
 
     .tag-green { background:#2ecc71; color:white; padding:2px 8px; border-radius:10px; font-size:0.75em; }
@@ -594,13 +597,16 @@
   }
 
   // ── notifications ──
-  function showBadgeNotification(name) {
+  function showBadgeNotification(name, imgSrc) {
     const b = $('badgeNotification');
     if (!b) return;
-    b.innerHTML = `🎉 You earned: <strong>${name}</strong>`;
-    b.style.display = 'block'; b.style.opacity = '1'; b.style.animation = 'none';
-    setTimeout(() => { b.style.animation = 'fadeInOut 3s forwards'; }, 10);
-    setTimeout(() => { b.style.display = 'none'; }, 3000);
+    const imgTag = imgSrc ? `<img src="${imgSrc}" onerror="this.style.display='none'">` : '';
+    b.innerHTML = `${imgTag}<div style="font-size:1.1em; margin-bottom:4px;">🏅 Badge Unlocked!</div><div style="font-size:1.3em;">${name}</div><div style="font-size:0.75em; opacity:0.85; margin-top:6px;">no cap, you're built different 🔥</div>`;
+    b.style.display = 'block'; b.style.opacity = '1';
+    b.style.animation = 'none';
+    setTimeout(() => { b.style.animation = 'badgePop 0.4s ease forwards'; }, 10);
+    setTimeout(() => { b.style.animation = 'badgeFade 0.6s ease forwards'; }, 3200);
+    setTimeout(() => { b.style.display = 'none'; }, 3800);
   }
 
   // ── screens ──
@@ -621,7 +627,7 @@
       if (!_s.meta.has(id) || _s.earned.has(id)) return;
       _s.earned.add(id); render();
       const cfg = _s.meta.get(id);
-      play('badgeSound'); showBadgeNotification(cfg?.title || 'Badge');
+      play('badgeSound'); showBadgeNotification(cfg?.title || 'Badge', cfg?.img || '');
     }
     function render() {
       const bar = $('badgeBar'); if (!bar) return; bar.innerHTML = '';
@@ -698,13 +704,41 @@
   }
 
   // ── feedback helpers ──
+  const successVibes = [
+    "slay! that's giving structural genius 💅",
+    "periodt. nailed it bestie 🔨",
+    "no cap, that's correct fr fr ✅",
+    "understood the assignment 📐",
+    "main character energy RIGHT THERE 🌟",
+    "it's giving civil engineer realness 🏗️",
+    "ate and left no crumbs 🍽️",
+    "sheesh, look at you go 🔥",
+    "that's bussin no cap 💯",
+    "W answer, absolute W 👑"
+  ];
+  const failVibes = [
+    "bestie that's not it 😭",
+    "girl math but make it wrong 💀",
+    "this ain't it chief, try again 🙅",
+    "we don't talk about that answer 🫣",
+    "the struggle is real rn 😤",
+    "oof, that's giving wrong energy 😬",
+    "not you forgetting the formula 💅",
+    "okay we're NOT doing this, try again 🛑",
+    "that's a yikes from me dawg 👀",
+    "the audacity... but also try again 😂"
+  ];
+
   function showFB(id, ok, html) {
     const el = $(id); if (!el) return;
     el.style.display = 'block';
     el.style.backgroundColor = ok ? '#e0f7e9' : '#fff3cd';
     el.style.color = ok ? '#155724' : '#856404';
     el.style.borderLeft = `4px solid ${ok ? '#2ecc71' : '#f39c12'}`;
-    el.innerHTML = html;
+    const vibe = ok
+      ? successVibes[Math.floor(Math.random() * successVibes.length)]
+      : failVibes[Math.floor(Math.random() * failVibes.length)];
+    el.innerHTML = `<div style="font-size:0.78em; font-style:italic; margin-bottom:6px; opacity:0.85;">${vibe}</div>` + html;
     if (ok) play('successSound'); else play('errorSound');
   }
 
